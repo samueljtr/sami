@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <!-- Background Radial Gradient -->
+    <radialGradient id="bgGlow" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stopColor="#FFFFFF" />
+      <stop offset="60%" stopColor="#EFF8FA" />
+      <stop offset="100%" stopColor="#E2F1F3" />
+    </radialGradient>
+
+    <!-- Amber Gold Gradient for A and Arrow -->
+    <linearGradient id="goldGradient" x1="120" y1="230" x2="330" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stopColor="#D97706" />
+      <stop offset="35%" stopColor="#F59E0B" />
+      <stop offset="80%" stopColor="#FBBF24" />
+      <stop offset="100%" stopColor="#FDE68A" />
+    </linearGradient>
+
+    <!-- Teal / Cyan Gradient for S and Financial Wave -->
+    <linearGradient id="tealGradient" x1="140" y1="270" x2="310" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stopColor="#0E7490" />
+      <stop offset="30%" stopColor="#0891B2" />
+      <stop offset="70%" stopColor="#06B6D4" />
+      <stop offset="100%" stopColor="#2DD4BF" />
+    </linearGradient>
+
+    <!-- Darker Teal for overlapping shadows and depth -->
+    <linearGradient id="shadowTeal" x1="180" y1="200" x2="250" y2="280" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stopColor="#083344" stopOpacity="0.4" />
+      <stop offset="100%" stopColor="#083344" stopOpacity="0" />
+    </linearGradient>
+
+    <!-- Drop Shadow for 3D ribbons -->
+    <filter id="ribbonShadow" x="-15%" y="-15%" width="130%" height="135%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" floodColor="#0F172A" floodOpacity="0.18" />
+    </filter>
+
+    <filter id="softGlow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Clean Background Canvas -->
+  <rect width="500" height="500" rx="32" fill="url(#bgGlow)" />
+
+  <!-- Center Symbol Group -->
+  <g transform="translate(10, 0)">
+    <!-- 1. The Gold "A" Apex and Upward Growth Arrow -->
+    <g filter="url(#ribbonShadow)">
+      <!-- Left leg & peak of "A" arch -->
+      <path
+        d="M 175 205 C 175 160 195 115 240 115 C 285 115 305 160 305 205"
+        fill="none"
+        stroke="url(#goldGradient)"
+        stroke-width="32"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+
+      <!-- Ascending Arrow Shaft rising to top-right -->
+      <path
+        d="M 270 205 L 340 135"
+        fill="none"
+        stroke="url(#goldGradient)"
+        stroke-width="32"
+        stroke-linecap="round"
+      />
+
+      <!-- Upward Arrow Head (Points up-right 45 deg) -->
+      <path
+        d="M 315 112 L 358 116 L 354 159 Z"
+        fill="url(#goldGradient)"
+        stroke="url(#goldGradient)"
+        stroke-width="6"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+      />
+    </g>
+
+    <!-- 2. The Teal "S" Loop and Ascending Financial Wave -->
+    <g filter="url(#ribbonShadow)">
+      <!-- Upper S Loop (curves around top-left) -->
+      <path
+        d="M 235 155 C 190 145 160 165 160 205 C 160 240 190 250 220 250"
+        fill="none"
+        stroke="url(#tealGradient)"
+        stroke-width="30"
+        stroke-linecap="round"
+      />
+
+      <!-- Financial wave flowing through center across the letters -->
+      <path
+        d="M 152 245 C 145 270 165 295 195 285 C 225 275 240 240 270 230 C 295 220 315 245 325 285"
+        fill="none"
+        stroke="url(#tealGradient)"
+        stroke-width="30"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </g>
+
+    <!-- Subtle Grounding Shadow beneath the symbol -->
+    <ellipse cx="250" cy="305" rx="60" ry="8" fill="#083344" opacity="0.12" filter="url(#softGlow)" />
+  </g>
+
+  <!-- Typography matching exact branding -->
+  <!-- "Sami" Wordmark in deep navy bold rounded sans -->
+  <text
+    x="250"
+    y="390"
+    text-anchor="middle"
+    fill="#0A2540"
+    font-family="system-ui, -apple-system, 'Plus Jakarta Sans', 'Inter', sans-serif"
+    font-size="64"
+    font-weight="800"
+    letter-spacing="-1.5"
+  >
+    Sami
+  </text>
+
+  <!-- "Tus finanzas personales" Subtitle in elegant teal -->
+  <text
+    x="250"
+    y="428"
+    text-anchor="middle"
+    fill="#0891B2"
+    font-family="system-ui, -apple-system, 'Plus Jakarta Sans', 'Inter', sans-serif"
+    font-size="22"
+    font-weight="600"
+    letter-spacing="0.2"
+  >
+    Tus finanzas personales
+  </text>
+</svg>

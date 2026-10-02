@@ -1,0 +1,6 @@
+{
+  "name": "Sami - Control de Finanzas Personales",
+  "description": "Aplicación personal para control de ingresos y gastos con almacenamiento local en localStorage, gráficos mensuales interactivos y exportación rápida a CSV y PDF.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
