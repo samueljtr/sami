@@ -13,9 +13,8 @@ import {
   ShieldCheck,
   Cloud,
 } from 'lucide-react';
+import { getCloudUserCount } from '../services/cloudApi';
 import { SAMI_LOGO_DATA_URL } from '../constants/logo';
-
-import { getTotalUserCount } from '../utils/localAuth';
 
 interface UserProfileModalProps {
   isOpen: boolean;
@@ -43,6 +42,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   const [budgetTotal, setBudgetTotal] = useState(String(settings.monthlyBudgetTotal || 2000));
   const [savingsTarget, setSavingsTarget] = useState(String(settings.monthlySavingsTarget || 500));
   const [savedFeedback, setSavedFeedback] = useState(false);
+  const [cloudUsersCount, setCloudUsersCount] = useState<number>(1);
 
   // Sync state whenever modal opens or settings change
   React.useEffect(() => {
@@ -51,6 +51,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
       setCurrency(settings.currency || 'USD');
       setBudgetTotal(String(settings.monthlyBudgetTotal || 2000));
       setSavingsTarget(String(settings.monthlySavingsTarget || 500));
+      getCloudUserCount().then((c) => setCloudUsersCount(c)).catch(() => {});
     }
   }, [isOpen, settings, user]);
 
@@ -131,7 +132,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                     <ShieldCheck className="w-2.5 h-2.5" /> Cuenta activa
                   </span>
                   <span className="inline-flex items-center gap-0.5 bg-indigo-100 text-indigo-800 text-[9px] font-bold px-1.5 py-0.2 rounded-full" title="Total de usuarios registrados en el sistema">
-                    {Math.max(1, getTotalUserCount())} {Math.max(1, getTotalUserCount()) === 1 ? 'usuario registrado' : 'usuarios registrados'}
+                    {cloudUsersCount} {cloudUsersCount === 1 ? 'usuario en la nube' : 'usuarios en la nube'}
                   </span>
                 </div>
                 <p className="text-[11px] text-indigo-600 truncate mt-0.5">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   AppTab,
   Category,
@@ -21,13 +21,7 @@ import {
 import { MONTH_NAMES_ES } from './utils/constants';
 
 import { useAuth } from './context/AuthContext';
-import {
-  loadFirestoreTransactions,
-  syncAllTransactionsToFirestore,
-  loadFirestoreDebts,
-  syncAllDebtsToFirestore,
-  saveFirestoreUserProfile,
-} from './services/firestoreSync';
+import { cloudFetchUserData, cloudSyncUserData } from './services/cloudApi';
 
 import { AppHeader } from './components/AppHeader';
 import { BottomNav } from './components/BottomNav';
@@ -43,10 +37,10 @@ import { TransactionModal } from './components/TransactionModal';
 import { CategoryModal } from './components/CategoryModal';
 import { SAMI_LOGO_DATA_URL } from './constants/logo';
 import { ExportModal } from './components/ExportModal';
-import { Sparkles, Lock, UserPlus } from 'lucide-react';
+import { Sparkles, UserPlus } from 'lucide-react';
 
 export default function App() {
-  const { user } = useAuth();
+  const { user, initialCloudData } = useAuth();
 
   // Core persistent states
   const [transactions, setTransactions] = useState<Transaction[]>(() => loadStoredTransactions());
@@ -78,61 +72,131 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  // Sync state to localStorage on changes
+  // Immediate hydration when initialCloudData is provided from AuthContext
+  useEffect(() => {
+    if (initialCloudData) {
+      if (Array.isArray(initialCloudData.transactions)) {
+        setTransactions(initialCloudData.transactions);
+        saveStoredTransactions(initialCloudData.transactions);
+      }
+      if (Array.isArray(initialCloudData.debts)) {
+        setDebts(initialCloudData.debts);
+        saveStoredDebts(initialCloudData.debts);
+      }
+      if (Array.isArray(initialCloudData.categories) && initialCloudData.categories.length > 0) {
+        setCategories(initialCloudData.categories);
+        saveStoredCategories(initialCloudData.categories);
+      }
+      if (initialCloudData.settings) {
+        setSettings(initialCloudData.settings);
+        saveStoredSettings(initialCloudData.settings);
+      }
+    }
+  }, [initialCloudData]);
+
+  // Initial cloud load on mount or user login
+  useEffect(() => {
+    if (user?.uid) {
+      cloudFetchUserData(user.uid, user.email).then((cloud) => {
+        if (cloud) {
+          if (Array.isArray(cloud.transactions)) {
+            setTransactions(cloud.transactions);
+            saveStoredTransactions(cloud.transactions);
+          }
+          if (Array.isArray(cloud.debts)) {
+            setDebts(cloud.debts);
+            saveStoredDebts(cloud.debts);
+          }
+          if (Array.isArray(cloud.categories) && cloud.categories.length > 0) {
+            setCategories(cloud.categories);
+            saveStoredCategories(cloud.categories);
+          }
+          if (cloud.settings) {
+            setSettings(cloud.settings);
+            saveStoredSettings(cloud.settings);
+          }
+        } else {
+          // Push initial data to cloud so mobile or new device has it immediately
+          cloudSyncUserData(user.uid, user.email, {
+            transactions,
+            debts,
+            categories,
+            settings,
+          }).catch(() => {});
+        }
+      }).catch(() => {});
+    }
+  }, [user?.uid, user?.email]);
+
+  // Real-time synchronization across devices (PC and Mobile)
+  // When user returns to mobile app, switches browser tabs, or every 10 seconds:
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const pullLatestCloud = () => {
+      if (document.visibilityState === 'visible' && user?.uid) {
+        cloudFetchUserData(user.uid, user.email).then((cloud) => {
+          if (cloud) {
+            if (Array.isArray(cloud.transactions)) {
+              setTransactions(cloud.transactions);
+              saveStoredTransactions(cloud.transactions);
+            }
+            if (Array.isArray(cloud.debts)) {
+              setDebts(cloud.debts);
+              saveStoredDebts(cloud.debts);
+            }
+            if (Array.isArray(cloud.categories) && cloud.categories.length > 0) {
+              setCategories(cloud.categories);
+              saveStoredCategories(cloud.categories);
+            }
+            if (cloud.settings) {
+              setSettings(cloud.settings);
+              saveStoredSettings(cloud.settings);
+            }
+          }
+        }).catch(() => {});
+      }
+    };
+
+    window.addEventListener('focus', pullLatestCloud);
+    document.addEventListener('visibilitychange', pullLatestCloud);
+
+    const interval = setInterval(pullLatestCloud, 10000);
+
+    return () => {
+      window.removeEventListener('focus', pullLatestCloud);
+      document.removeEventListener('visibilitychange', pullLatestCloud);
+      clearInterval(interval);
+    };
+  }, [user?.uid, user?.email]);
+
+  // Persist mutations locally and push to cloud server
+  const isFirstMount = useRef(true);
+  const syncTimer = useRef<any>(null);
+
   useEffect(() => {
     saveStoredTransactions(transactions);
-    if (user?.uid) {
-      syncAllTransactionsToFirestore(user.uid, transactions).catch(() => {});
-    }
-  }, [transactions, user?.uid]);
-
-  useEffect(() => {
     saveStoredCategories(categories);
-  }, [categories]);
-
-  useEffect(() => {
     saveStoredSettings(settings);
-    if (user?.uid) {
-      saveFirestoreUserProfile(user.uid, settings, user.email).catch(() => {});
-    }
-  }, [settings, user?.uid]);
-
-  useEffect(() => {
     saveStoredDebts(debts);
-    if (user?.uid) {
-      syncAllDebtsToFirestore(user.uid, debts).catch(() => {});
+
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
     }
-  }, [debts, user?.uid]);
 
-  // Synchronize on User login
-  useEffect(() => {
     if (user?.uid) {
-      showToast(`¡Bienvenido, ${user.displayName || user.email}!`);
-      if (user.displayName && user.displayName !== settings.personName) {
-        setSettings((prev) => ({ ...prev, personName: user.displayName || prev.personName }));
-      }
-
-      // Fetch cloud transactions
-      loadFirestoreTransactions(user.uid).then((cloudTxs) => {
-        if (cloudTxs.length > 0) {
-          setTransactions(cloudTxs);
-          saveStoredTransactions(cloudTxs);
-        } else if (transactions.length > 0) {
-          syncAllTransactionsToFirestore(user.uid, transactions).catch(() => {});
-        }
-      }).catch(() => {});
-
-      // Fetch cloud debts
-      loadFirestoreDebts(user.uid).then((cloudDebts) => {
-        if (cloudDebts.length > 0) {
-          setDebts(cloudDebts);
-          saveStoredDebts(cloudDebts);
-        } else if (debts.length > 0) {
-          syncAllDebtsToFirestore(user.uid, debts).catch(() => {});
-        }
-      }).catch(() => {});
+      if (syncTimer.current) clearTimeout(syncTimer.current);
+      syncTimer.current = setTimeout(() => {
+        cloudSyncUserData(user.uid, user.email, {
+          transactions,
+          debts,
+          categories,
+          settings,
+        }).catch((err) => console.warn('Cloud sync error:', err));
+      }, 500);
     }
-  }, [user?.uid]);
+  }, [transactions, categories, settings, debts, user?.uid, user?.email]);
 
   // Current selected month's transactions
   const currentMonthTransactions = useMemo(() => {
@@ -212,7 +276,7 @@ export default function App() {
       setTransactions((prev) =>
         prev.map((t) => (t.id === existingId ? { ...t, ...data } : t))
       );
-      showToast('Movimiento actualizado');
+      showToast('Movimiento actualizado y sincronizado');
     } else {
       const newTx: Transaction = {
         ...data,
@@ -220,7 +284,7 @@ export default function App() {
         createdAt: new Date().toISOString(),
       };
       setTransactions((prev) => [newTx, ...prev]);
-      showToast('Movimiento registrado con éxito');
+      showToast('Movimiento registrado y guardado en la nube');
     }
     setIsTransactionModalOpen(false);
     setEditingTransaction(null);
@@ -246,7 +310,7 @@ export default function App() {
         return d;
       })
     );
-    showToast('¡Cuenta saldada en 1 clic! Finanzas actualizadas.');
+    showToast('¡Cuenta saldada en 1 clic! Finanzas sincronizadas.');
   };
 
   const handlePayDebt = (debtId: string) => {
@@ -285,7 +349,7 @@ export default function App() {
     showToast('Abriendo WhatsApp y mensaje copiado al portapapeles');
   };
 
-  const handleApplySavingsChallenge = (amount: number, title: string) => {
+  const handleApplySavingsChallenge = (amount: number) => {
     setSettings((prev) => ({
       ...prev,
       monthlySavingsTarget: (prev.monthlySavingsTarget || 500) + amount,
@@ -319,7 +383,7 @@ export default function App() {
   const handleOpenNewExpense = () => {
     if (!user) {
       setAuthRequiredNotice(
-        '¡Registro obligatorio! Para poder realizar tu primer registro de gasto o movimiento y guardarlo en la nube, por favor crea tu cuenta o inicia sesión.'
+        '¡Registro obligatorio! Para poder realizar tu primer registro de gasto y sincronizarlo entre tu PC y celular, por favor crea tu cuenta o inicia sesión.'
       );
       setIsAuthModalOpen(true);
       return;
@@ -343,7 +407,7 @@ export default function App() {
   const handleOpenNewLimit = () => {
     if (!user) {
       setAuthRequiredNotice(
-        '¡Registro obligatorio! Para configurar nuevos límites de presupuesto y guardarlos en tu cuenta, por favor crea tu cuenta o inicia sesión.'
+        '¡Registro obligatorio! Para configurar nuevos límites de presupuesto y sincronizarlos con todos tus dispositivos, por favor crea tu cuenta o inicia sesión.'
       );
       setIsAuthModalOpen(true);
       return;
@@ -377,10 +441,10 @@ export default function App() {
                 </div>
                 <div className="min-w-0">
                   <h4 className="text-xs sm:text-sm font-bold tracking-tight text-white truncate">
-                    Registro requerido para agregar datos
+                    Sincronización en la Nube
                   </h4>
                   <p className="text-[11px] text-blue-100 leading-snug">
-                    Crea tu cuenta gratuita para registrar tu primer gasto y sincronizar con la nube.
+                    Crea tu cuenta gratuita para sincronizar tus finanzas en tiempo real entre tu PC y celular.
                   </p>
                 </div>
               </div>
@@ -388,7 +452,7 @@ export default function App() {
                 type="button"
                 onClick={() => {
                   setAuthRequiredNotice(
-                    '¡Registro obligatorio! Para poder realizar tu primer registro de gasto, crea tu cuenta o inicia sesión.'
+                    '¡Registro obligatorio! Para poder realizar tu primer registro de gasto y sincronizar entre tu PC y celular, crea tu cuenta o inicia sesión.'
                   );
                   setIsAuthModalOpen(true);
                 }}

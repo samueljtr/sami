@@ -114,10 +114,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ activeTab, settings, onOpe
             <User className="w-5 h-5 text-blue-600" />
           )}
 
-          {/* Green dot badge when connected to Firebase */}
+          {/* Green dot badge when connected to Cloud */}
           {user && (
             <span
-              title="Sincronizado con Firebase Cloud"
+              title="Sincronizado en la nube (PC y Móvil)"
               className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full shadow-xs"
             />
           )}
