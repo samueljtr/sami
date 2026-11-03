@@ -1,0 +1,93 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User account settings and finance preferences",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "description": "User email address" },
+        "displayName": { "type": "string", "maxLength": 100 },
+        "currency": { "type": "string", "maxLength": 10 },
+        "currencySymbol": { "type": "string", "maxLength": 5 },
+        "monthlyBudgetTotal": { "type": "number" },
+        "monthlySavingsTarget": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Financial income or expense transaction",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "type": { "type": "string", "enum": ["expense", "income"] },
+        "amount": { "type": "number" },
+        "category": { "type": "string", "maxLength": 100 },
+        "date": { "type": "string", "maxLength": 20 },
+        "description": { "type": "string", "maxLength": 250 },
+        "paymentMethod": { "type": "string", "maxLength": 50 },
+        "notes": { "type": "string", "maxLength": 500 },
+        "payer": { "type": "string", "maxLength": 100 },
+        "splitStatus": { "type": "string", "maxLength": 50 },
+        "splitAmount": { "type": "number" },
+        "splitNote": { "type": "string", "maxLength": 200 },
+        "friendName": { "type": "string", "maxLength": 100 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["userId", "type", "amount", "category", "date", "description"]
+    },
+    "Debt": {
+      "title": "Debt",
+      "description": "Friend debt or shared account payable/receivable",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "type": { "type": "string", "enum": ["owe_me", "i_owe", "settled"] },
+        "personName": { "type": "string", "maxLength": 100 },
+        "concept": { "type": "string", "maxLength": 200 },
+        "timeAgo": { "type": "string", "maxLength": 100 },
+        "amount": { "type": "number" },
+        "statusText": { "type": "string", "maxLength": 50 },
+        "phone": { "type": "string", "maxLength": 50 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["userId", "type", "personName", "amount"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Customizable expense or income category with budget",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string", "maxLength": 100 },
+        "type": { "type": "string", "enum": ["expense", "income"] },
+        "icon": { "type": "string", "maxLength": 50 },
+        "color": { "type": "string", "maxLength": 30 },
+        "monthlyBudget": { "type": "number" },
+        "spent": { "type": "number" }
+      },
+      "required": ["userId", "name", "type"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile document containing preferences"
+    },
+    "/users/{userId}/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "User personal and shared transactions subcollection"
+    },
+    "/users/{userId}/debts/{debtId}": {
+      "schema": "Debt",
+      "description": "User friends debts and pending accounts subcollection"
+    },
+    "/users/{userId}/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "User expense and income categories with custom budgets"
+    }
+  }
+}

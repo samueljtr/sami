@@ -120,62 +120,65 @@ export const FinanceCharts: React.FC<FinanceChartsProps> = ({
   });
 
   return (
-    <div className="bg-white rounded-xl border border-neutral-200/80 shadow-xs p-5 md:p-6 mb-8 transition-all">
+    <div className="bg-white rounded-xl border border-neutral-200/80 shadow-xs p-3.5 sm:p-5 md:p-6 mb-8 transition-all">
       {/* Header and Visualizer Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-neutral-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pb-4 sm:pb-5 border-b border-neutral-100">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight text-neutral-900 flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-neutral-700" />
-            Análisis Gráfico de Finanzas
+          <h2 className="text-base sm:text-lg font-semibold tracking-tight text-neutral-900 flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-neutral-700 shrink-0" />
+            <span>Análisis Gráfico</span>
           </h2>
-          <p className="text-xs text-neutral-500 mt-0.5">
-            Comportamiento comparativo, distribución por categorías y flujo temporal
+          <p className="text-[11px] sm:text-xs text-neutral-500 mt-0.5">
+            Comparativa mensual, distribución por categorías y flujo temporal
           </p>
         </div>
 
         {/* View mode segmented switcher */}
-        <div className="flex items-center gap-1 p-1 bg-neutral-100 rounded-lg self-start sm:self-auto">
+        <div className="flex items-center gap-1 p-1 bg-neutral-100 rounded-lg w-full sm:w-auto">
           <button
             onClick={() => setActiveTab('comparison')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
+            className={`flex-1 sm:flex-initial flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
               activeTab === 'comparison'
-                ? 'bg-white text-neutral-900 shadow-xs'
+                ? 'bg-white text-neutral-900 shadow-xs font-semibold'
                 : 'text-neutral-600 hover:text-neutral-900'
             }`}
           >
             <BarChart3 className="w-3.5 h-3.5" />
-            Comparativa Mensual
+            <span className="sm:hidden">Comparativa</span>
+            <span className="hidden sm:inline">Comparativa Mensual</span>
           </button>
           <button
             onClick={() => setActiveTab('categories')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
+            className={`flex-1 sm:flex-initial flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
               activeTab === 'categories'
-                ? 'bg-white text-neutral-900 shadow-xs'
+                ? 'bg-white text-neutral-900 shadow-xs font-semibold'
                 : 'text-neutral-600 hover:text-neutral-900'
             }`}
           >
             <PieChart className="w-3.5 h-3.5" />
-            Por Categorías
+            <span className="sm:hidden">Categorías</span>
+            <span className="hidden sm:inline">Por Categorías</span>
           </button>
           <button
             onClick={() => setActiveTab('daily')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
+            className={`flex-1 sm:flex-initial flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
               activeTab === 'daily'
-                ? 'bg-white text-neutral-900 shadow-xs'
+                ? 'bg-white text-neutral-900 shadow-xs font-semibold'
                 : 'text-neutral-600 hover:text-neutral-900'
             }`}
           >
             <LineChart className="w-3.5 h-3.5" />
-            Flujo Diario
+            <span className="sm:hidden">Diario</span>
+            <span className="hidden sm:inline">Flujo Diario</span>
           </button>
         </div>
       </div>
 
       {/* TAB 1: Comparativa Mensual (Income vs Expense Bars) */}
       {activeTab === 'comparison' && (
-        <div className="pt-6">
-          <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-            <div className="flex items-center gap-4 text-xs text-neutral-600">
+        <div className="pt-4 sm:pt-6">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2 text-xs">
+            <div className="flex items-center gap-3 sm:gap-4 text-neutral-600 flex-wrap">
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded-xs bg-emerald-500 inline-block"></span>
                 <span>Ingresos</span>
@@ -189,8 +192,8 @@ export const FinanceCharts: React.FC<FinanceChartsProps> = ({
                 <span>Mes Activo</span>
               </div>
             </div>
-            <p className="text-xs text-neutral-400">
-              Haz clic en cualquier mes para explorar su detalle
+            <p className="text-[11px] text-neutral-400 hidden sm:block">
+              Toca o haz clic en cualquier mes para explorarlo
             </p>
           </div>
 
@@ -199,7 +202,7 @@ export const FinanceCharts: React.FC<FinanceChartsProps> = ({
             <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-8">
               {[1, 0.75, 0.5, 0.25, 0].map((step, i) => (
                 <div key={i} className="flex items-center w-full">
-                  <span className="text-[10px] text-neutral-400 font-mono w-16 text-right pr-3 tabular-nums">
+                  <span className="text-[10px] text-neutral-400 font-mono w-12 sm:w-16 text-right pr-2 sm:pr-3 tabular-nums truncate">
                     {formatCurrency(maxBarValue * step, currencySymbol)}
                   </span>
                   <div className="flex-1 border-b border-neutral-100"></div>
@@ -207,7 +210,7 @@ export const FinanceCharts: React.FC<FinanceChartsProps> = ({
               ))}
             </div>
 
-            <div className="relative h-full ml-16 flex items-end justify-around gap-2 sm:gap-4 pb-8 z-10">
+            <div className="relative h-full ml-12 sm:ml-16 flex items-end justify-around gap-1.5 sm:gap-4 pb-8 z-10">
               {monthlyData.map((data, idx) => {
                 const isSelected = data.key === selectedMonthKey;
                 const incomeHeight = maxBarValue > 0 ? (data.totalIncome / maxBarValue) * 100 : 0;
@@ -222,24 +225,21 @@ export const FinanceCharts: React.FC<FinanceChartsProps> = ({
                     onMouseLeave={() => setHoveredBarIndex(null)}
                     className="relative flex-1 flex flex-col items-center h-full justify-end cursor-pointer group"
                   >
-                    {/* Tooltip on hover */}
+                    {/* Tooltip */}
                     {isHovered && (
-                      <div className="absolute -top-16 bg-neutral-900 text-white p-2 rounded-lg text-xs shadow-lg z-30 pointer-events-none whitespace-nowrap transition-opacity">
+                      <div className="absolute -top-16 bg-neutral-900 text-white p-2 rounded-lg text-[11px] shadow-lg z-30 pointer-events-none whitespace-nowrap transition-opacity">
                         <div className="font-semibold">{data.label}</div>
                         <div className="text-emerald-400">
-                          Ingresos: {formatCurrency(data.totalIncome, currencySymbol)}
+                          +{formatCurrency(data.totalIncome, currencySymbol)}
                         </div>
                         <div className="text-rose-400">
-                          Gastos: {formatCurrency(data.totalExpense, currencySymbol)}
-                        </div>
-                        <div className="text-neutral-300 font-mono">
-                          Balance: {formatCurrency(data.netSavings, currencySymbol)}
+                          -{formatCurrency(data.totalExpense, currencySymbol)}
                         </div>
                       </div>
                     )}
 
                     {/* Bars pair */}
-                    <div className="flex items-end justify-center gap-1 sm:gap-1.5 w-full max-w-[50px] h-full pb-1">
+                    <div className="flex items-end justify-center gap-1 sm:gap-1.5 w-full max-w-[40px] sm:max-w-[50px] h-full pb-1">
                       {/* Income Bar */}
                       <div
                         style={{ height: `${Math.max(incomeHeight, 2)}%` }}
@@ -262,13 +262,14 @@ export const FinanceCharts: React.FC<FinanceChartsProps> = ({
 
                     {/* X-axis Label */}
                     <div
-                      className={`text-[11px] font-medium mt-2 truncate max-w-full transition-colors ${
+                      className={`text-[10px] sm:text-[11px] font-medium mt-2 truncate max-w-full transition-colors text-center ${
                         isSelected
-                          ? 'text-neutral-900 font-semibold underline underline-offset-4 decoration-2 decoration-neutral-900'
+                          ? 'text-neutral-900 font-bold underline underline-offset-4 decoration-2 decoration-neutral-900'
                           : 'text-neutral-500 group-hover:text-neutral-900'
                       }`}
                     >
-                      {data.label.split(' ')[0]}
+                      <span className="sm:hidden">{data.label.split(' ')[0].slice(0, 3)}</span>
+                      <span className="hidden sm:inline">{data.label.split(' ')[0]}</span>
                     </div>
                   </div>
                 );
@@ -403,9 +404,9 @@ export const FinanceCharts: React.FC<FinanceChartsProps> = ({
 
       {/* TAB 3: Flujo Diario (Cumulative Flow Area) */}
       {activeTab === 'daily' && (
-        <div className="pt-6">
-          <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-            <div className="flex items-center gap-4 text-xs text-neutral-600">
+        <div className="pt-4 sm:pt-6">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2 text-xs">
+            <div className="flex items-center gap-3 sm:gap-4 text-neutral-600 flex-wrap">
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
                 <span>Ingreso Acumulado</span>
@@ -415,75 +416,79 @@ export const FinanceCharts: React.FC<FinanceChartsProps> = ({
                 <span>Gasto Acumulado</span>
               </div>
             </div>
-            <p className="text-xs text-neutral-400">
-              Evolución acumulativa día a día a lo largo del mes
+            <p className="text-[11px] text-neutral-400">
+              <span className="sm:hidden">Desliza para ver días →</span>
+              <span className="hidden sm:inline">Evolución acumulativa día a día a lo largo del mes</span>
             </p>
           </div>
 
-          <div className="relative h-64 w-full pt-4">
-            <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-8">
-              {[1, 0.75, 0.5, 0.25, 0].map((step, i) => (
-                <div key={i} className="flex items-center w-full">
-                  <span className="text-[10px] text-neutral-400 font-mono w-16 text-right pr-3 tabular-nums">
-                    {formatCurrency(maxCumulative * step, currencySymbol)}
-                  </span>
-                  <div className="flex-1 border-b border-neutral-100"></div>
-                </div>
-              ))}
-            </div>
-
-            {/* Daily Steps */}
-            <div className="relative h-full ml-16 flex items-end justify-between pb-8 z-10">
-              {cumulativeData.map((d, idx) => {
-                const incHeight = maxCumulative > 0 ? (d.cumIncome / maxCumulative) * 100 : 0;
-                const expHeight = maxCumulative > 0 ? (d.cumExpense / maxCumulative) * 100 : 0;
-                const isHovered = hoveredDayIndex === idx;
-
-                return (
-                  <div
-                    key={d.day}
-                    onMouseEnter={() => setHoveredDayIndex(idx)}
-                    onMouseLeave={() => setHoveredDayIndex(null)}
-                    className="relative flex-1 flex flex-col items-center h-full justify-end cursor-pointer group"
-                  >
-                    {isHovered && (
-                      <div className="absolute -top-16 bg-neutral-900 text-white p-2 rounded-lg text-xs shadow-lg z-30 pointer-events-none whitespace-nowrap">
-                        <div className="font-semibold">Día {d.day}</div>
-                        <div className="text-emerald-400">
-                          Ingresos ac.: {formatCurrency(d.cumIncome, currencySymbol)}
-                        </div>
-                        <div className="text-rose-400">
-                          Gastos ac.: {formatCurrency(d.cumExpense, currencySymbol)}
-                        </div>
-                        {d.expense > 0 && (
-                          <div className="text-neutral-300 text-[10px]">
-                            Gastado hoy: {formatCurrency(d.expense, currencySymbol)}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Step lines indicator */}
-                    <div className="w-full flex items-end justify-center relative h-full">
-                      {/* Income point */}
-                      <div
-                        style={{ bottom: `${incHeight}%` }}
-                        className="absolute w-1.5 h-1.5 rounded-full bg-emerald-500 -translate-x-0.5"
-                      />
-                      {/* Expense point */}
-                      <div
-                        style={{ bottom: `${expHeight}%` }}
-                        className="absolute w-1.5 h-1.5 rounded-full bg-rose-500 translate-x-0.5"
-                      />
-                    </div>
-
-                    {/* Day label every few days */}
-                    <div className="text-[9px] font-mono text-neutral-400 mt-2">
-                      {d.day === 1 || d.day % 5 === 0 || d.day === daysInMonth ? d.day : ''}
-                    </div>
+          <div className="overflow-x-auto pb-2">
+            <div className="min-w-[480px] sm:min-w-full relative h-64 w-full pt-4">
+              <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-8">
+                {[1, 0.75, 0.5, 0.25, 0].map((step, i) => (
+                  <div key={i} className="flex items-center w-full">
+                    <span className="text-[10px] text-neutral-400 font-mono w-12 sm:w-16 text-right pr-2 sm:pr-3 tabular-nums truncate">
+                      {formatCurrency(maxCumulative * step, currencySymbol)}
+                    </span>
+                    <div className="flex-1 border-b border-neutral-100"></div>
                   </div>
-                );
-              })}
+                ))}
+              </div>
+
+              {/* Daily Steps */}
+              <div className="relative h-full ml-12 sm:ml-16 flex items-end justify-between pb-8 z-10">
+                {cumulativeData.map((d, idx) => {
+                  const incHeight = maxCumulative > 0 ? (d.cumIncome / maxCumulative) * 100 : 0;
+                  const expHeight = maxCumulative > 0 ? (d.cumExpense / maxCumulative) * 100 : 0;
+                  const isHovered = hoveredDayIndex === idx;
+
+                  return (
+                    <div
+                      key={d.day}
+                      onClick={() => setHoveredDayIndex(hoveredDayIndex === idx ? null : idx)}
+                      onMouseEnter={() => setHoveredDayIndex(idx)}
+                      onMouseLeave={() => setHoveredDayIndex(null)}
+                      className="relative flex-1 flex flex-col items-center h-full justify-end cursor-pointer group"
+                    >
+                      {isHovered && (
+                        <div className="absolute -top-16 bg-neutral-900 text-white p-2 rounded-lg text-[11px] shadow-lg z-30 pointer-events-none whitespace-nowrap">
+                          <div className="font-semibold">Día {d.day}</div>
+                          <div className="text-emerald-400">
+                            +{formatCurrency(d.cumIncome, currencySymbol)}
+                          </div>
+                          <div className="text-rose-400">
+                            -{formatCurrency(d.cumExpense, currencySymbol)}
+                          </div>
+                          {d.expense > 0 && (
+                            <div className="text-neutral-300 text-[10px]">
+                              Hoy: {formatCurrency(d.expense, currencySymbol)}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Step lines indicator */}
+                      <div className="w-full flex items-end justify-center relative h-full">
+                        {/* Income point */}
+                        <div
+                          style={{ bottom: `${incHeight}%` }}
+                          className="absolute w-1.5 h-1.5 rounded-full bg-emerald-500 -translate-x-0.5"
+                        />
+                        {/* Expense point */}
+                        <div
+                          style={{ bottom: `${expHeight}%` }}
+                          className="absolute w-1.5 h-1.5 rounded-full bg-rose-500 translate-x-0.5"
+                        />
+                      </div>
+
+                      {/* Day label every few days */}
+                      <div className="text-[9px] font-mono text-neutral-400 mt-2">
+                        {d.day === 1 || d.day % 5 === 0 || d.day === daysInMonth ? d.day : ''}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>

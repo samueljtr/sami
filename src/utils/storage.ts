@@ -1,11 +1,12 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Category, PaymentMethod, Transaction, UserSettings } from '../types/finance';
-import { DEFAULT_CATEGORIES, DEFAULT_SETTINGS, getInitialDemoTransactions, PAYMENT_METHODS } from './constants';
+import { Category, DebtAccount, PaymentMethod, Transaction, UserSettings } from '../types/finance';
+import { DEFAULT_CATEGORIES, DEFAULT_DEBTS, DEFAULT_SETTINGS, getInitialDemoTransactions, PAYMENT_METHODS } from './constants';
 
 const TRANSACTIONS_KEY = 'sami_finance_transactions_v1';
 const CATEGORIES_KEY = 'sami_finance_categories_v1';
 const SETTINGS_KEY = 'sami_finance_settings_v1';
+const DEBTS_KEY = 'sami_finance_debts_v1';
 
 // Format currency
 export function formatCurrency(amount: number, symbol = '$'): string {
@@ -101,21 +102,50 @@ export function saveStoredSettings(settings: UserSettings): void {
   }
 }
 
-export function clearAllTransactions(): void {
-  saveStoredTransactions([]);
+export function loadStoredDebts(): DebtAccount[] {
+  try {
+    const raw = localStorage.getItem(DEBTS_KEY);
+    if (!raw) {
+      saveStoredDebts(DEFAULT_DEBTS);
+      return DEFAULT_DEBTS;
+    }
+    return JSON.parse(raw);
+  } catch (err) {
+    console.error('Error loading debts from localStorage:', err);
+    return DEFAULT_DEBTS;
+  }
 }
 
-export function resetToDemoData(): { transactions: Transaction[]; categories: Category[] } {
+export function saveStoredDebts(debts: DebtAccount[]): void {
+  try {
+    localStorage.setItem(DEBTS_KEY, JSON.stringify(debts));
+  } catch (err) {
+    console.error('Error saving debts to localStorage:', err);
+  }
+}
+
+export function clearAllTransactions(): void {
+  saveStoredTransactions([]);
+  saveStoredDebts([]);
+}
+
+export function resetToDemoData(): {
+  transactions: Transaction[];
+  categories: Category[];
+  debts: DebtAccount[];
+} {
   const transactions = getInitialDemoTransactions();
   saveStoredTransactions(transactions);
   saveStoredCategories(DEFAULT_CATEGORIES);
-  return { transactions, categories: DEFAULT_CATEGORIES };
+  saveStoredDebts(DEFAULT_DEBTS);
+  return { transactions, categories: DEFAULT_CATEGORIES, debts: DEFAULT_DEBTS };
 }
 
 export function clearAllData(): void {
   localStorage.removeItem(TRANSACTIONS_KEY);
   localStorage.removeItem(CATEGORIES_KEY);
   localStorage.removeItem(SETTINGS_KEY);
+  localStorage.removeItem(DEBTS_KEY);
 }
 
 // Payment method label

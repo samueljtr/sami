@@ -94,22 +94,22 @@ export const TransactionList: React.FC<TransactionListProps> = ({
   return (
     <div className="bg-white rounded-xl border border-neutral-200/80 shadow-xs overflow-hidden transition-all">
       {/* Table Header Controls */}
-      <div className="p-4 sm:p-5 border-b border-neutral-200/80 space-y-3">
+      <div className="p-3.5 sm:p-5 border-b border-neutral-200/80 space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="text-base font-semibold text-neutral-900 tracking-tight">
               Movimientos del Periodo
             </h3>
-            <p className="text-xs text-neutral-500 mt-0.5">
+            <p className="text-[11px] sm:text-xs text-neutral-500 mt-0.5">
               {filteredTransactions.length} de {transactions.length} registros listados
             </p>
           </div>
 
           {/* Quick Filter Segmented Control */}
-          <div className="flex items-center gap-1 p-1 bg-neutral-100 rounded-lg self-start sm:self-auto">
+          <div className="flex items-center gap-1 p-1 bg-neutral-100 rounded-lg w-full sm:w-auto">
             <button
               onClick={() => setTypeFilter('all')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
+              className={`flex-1 sm:flex-initial text-center px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
                 typeFilter === 'all'
                   ? 'bg-white text-neutral-900 shadow-xs'
                   : 'text-neutral-600 hover:text-neutral-900'
@@ -119,7 +119,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
             </button>
             <button
               onClick={() => setTypeFilter('expense')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
+              className={`flex-1 sm:flex-initial text-center px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
                 typeFilter === 'expense'
                   ? 'bg-white text-rose-700 shadow-xs'
                   : 'text-neutral-600 hover:text-rose-700'
@@ -129,7 +129,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
             </button>
             <button
               onClick={() => setTypeFilter('income')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
+              className={`flex-1 sm:flex-initial text-center px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
                 typeFilter === 'income'
                   ? 'bg-white text-emerald-700 shadow-xs'
                   : 'text-neutral-600 hover:text-emerald-700'
@@ -141,9 +141,9 @@ export const TransactionList: React.FC<TransactionListProps> = ({
         </div>
 
         {/* Search and Secondary Filter Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 pt-2">
+        <div className="grid grid-cols-2 sm:grid-cols-12 gap-2 sm:gap-2.5 pt-1 sm:pt-2">
           {/* Search Box */}
-          <div className="sm:col-span-5 relative">
+          <div className="col-span-2 sm:col-span-5 relative">
             <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
@@ -155,13 +155,13 @@ export const TransactionList: React.FC<TransactionListProps> = ({
           </div>
 
           {/* Category Dropdown */}
-          <div className="sm:col-span-3">
+          <div className="col-span-1 sm:col-span-3">
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-lg border border-neutral-300 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none bg-white transition-colors cursor-pointer"
+              className="w-full px-2.5 sm:px-3 py-2 text-xs rounded-lg border border-neutral-300 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none bg-white transition-colors cursor-pointer truncate"
             >
-              <option value="all">Todas las categorías</option>
+              <option value="all">Todas categorías</option>
               {categories.map((c) => (
                 <option key={c.id} value={c.name}>
                   {c.name}
@@ -171,13 +171,13 @@ export const TransactionList: React.FC<TransactionListProps> = ({
           </div>
 
           {/* Payment Method Dropdown */}
-          <div className="sm:col-span-2">
+          <div className="col-span-1 sm:col-span-2">
             <select
               value={methodFilter}
               onChange={(e) => setMethodFilter(e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-lg border border-neutral-300 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none bg-white transition-colors cursor-pointer"
+              className="w-full px-2.5 sm:px-3 py-2 text-xs rounded-lg border border-neutral-300 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none bg-white transition-colors cursor-pointer truncate"
             >
-              <option value="all">Todos los métodos</option>
+              <option value="all">Todos métodos</option>
               {PAYMENT_METHODS.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.label}
@@ -187,11 +187,11 @@ export const TransactionList: React.FC<TransactionListProps> = ({
           </div>
 
           {/* Sort By */}
-          <div className="sm:col-span-2">
+          <div className="col-span-2 sm:col-span-2">
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="w-full px-3 py-2 text-xs rounded-lg border border-neutral-300 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none bg-white transition-colors cursor-pointer"
+              className="w-full px-2.5 sm:px-3 py-2 text-xs rounded-lg border border-neutral-300 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none bg-white transition-colors cursor-pointer truncate"
             >
               <option value="date_desc">Más recientes</option>
               <option value="date_asc">Más antiguos</option>
@@ -200,9 +200,27 @@ export const TransactionList: React.FC<TransactionListProps> = ({
             </select>
           </div>
         </div>
+
+        {/* Filter Subtotal Bar */}
+        {filteredTransactions.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between text-[11px] pt-2 border-t border-neutral-100 text-neutral-500 gap-2">
+            <span className="font-mono">
+              Mostrando {filteredTransactions.length} movimiento{filteredTransactions.length !== 1 ? 's' : ''}
+            </span>
+            <div className="flex items-center gap-3 font-mono">
+              <span className="text-emerald-700 font-medium">
+                Ingresos: +{formatCurrency(totalIncomeFiltered, currencySymbol)}
+              </span>
+              <span className="text-neutral-300">|</span>
+              <span className="text-rose-700 font-medium">
+                Gastos: -{formatCurrency(totalExpenseFiltered, currencySymbol)}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Transaction Table / Empty State */}
+      {/* Transaction Content (Empty State or List) */}
       {filteredTransactions.length === 0 ? (
         <div className="py-14 px-4 text-center">
           <div className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center mx-auto mb-3 text-neutral-400">
@@ -224,104 +242,200 @@ export const TransactionList: React.FC<TransactionListProps> = ({
           </button>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-neutral-200/80 bg-neutral-50/70 text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
-                <th className="py-3 px-4 w-32">Fecha</th>
-                <th className="py-3 px-4">Descripción</th>
-                <th className="py-3 px-4 w-44">Categoría</th>
-                <th className="py-3 px-4 w-36">Método</th>
-                <th className="py-3 px-4 w-32 text-right">Monto</th>
-                <th className="py-3 px-4 w-28 text-center no-print">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-neutral-100 text-xs">
-              {filteredTransactions.map((t) => {
-                const isIncome = t.type === 'income';
-                const catColor = categoryColorMap.get(t.category) || '#94A3B8';
+        <>
+          {/* MOBILE CARDS VIEW (Screen width < md) */}
+          <div className="block md:hidden divide-y divide-neutral-100">
+            {filteredTransactions.map((t) => {
+              const isIncome = t.type === 'income';
+              const catColor = categoryColorMap.get(t.category) || '#94A3B8';
 
-                return (
-                  <tr
-                    key={t.id}
-                    className="hover:bg-neutral-50/70 transition-colors group"
-                  >
-                    {/* Date */}
-                    <td className="py-3 px-4 font-mono text-neutral-600 tabular-nums whitespace-nowrap">
-                      {formatDateES(t.date)}
-                    </td>
+              return (
+                <div
+                  key={`mobile-${t.id}`}
+                  className="p-3.5 hover:bg-neutral-50/70 transition-colors space-y-2"
+                >
+                  {/* Card Row 1: Category with dot, Date & Amount */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: catColor }}
+                      />
+                      <span className="text-xs font-semibold text-neutral-800 truncate">
+                        {t.category}
+                      </span>
+                      <span
+                        className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
+                          isIncome
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : 'bg-rose-50 text-rose-700'
+                        }`}
+                      >
+                        {isIncome ? 'Ingreso' : 'Gasto'}
+                      </span>
+                    </div>
 
-                    {/* Description & optional notes */}
-                    <td className="py-3 px-4">
-                      <div className="font-medium text-neutral-900 line-clamp-1">
-                        {t.description}
-                      </div>
-                      {t.notes && (
-                        <div className="text-[11px] text-neutral-400 line-clamp-1 mt-0.5">
-                          {t.notes}
-                        </div>
-                      )}
-                    </td>
-
-                    {/* Category (unboxed text with colored indicator dot as per Zero-Pill) */}
-                    <td className="py-3 px-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="w-2 h-2 rounded-full shrink-0"
-                          style={{ backgroundColor: catColor }}
-                        />
-                        <span className="text-neutral-700 font-medium truncate max-w-[150px]">
-                          {t.category}
-                        </span>
-                      </div>
-                    </td>
-
-                    {/* Payment Method */}
-                    <td className="py-3 px-4 text-neutral-500 whitespace-nowrap">
-                      {getPaymentMethodLabel(t.paymentMethod)}
-                    </td>
-
-                    {/* Amount */}
-                    <td
-                      className={`py-3 px-4 text-right font-mono font-semibold tabular-nums whitespace-nowrap ${
+                    <div
+                      className={`font-mono text-sm font-bold tabular-nums shrink-0 whitespace-nowrap ${
                         isIncome ? 'text-emerald-600' : 'text-rose-600'
                       }`}
                     >
                       {isIncome ? '+' : '-'} {formatCurrency(t.amount, currencySymbol)}
-                    </td>
+                    </div>
+                  </div>
 
-                    {/* Actions */}
-                    <td className="py-3 px-4 text-center no-print whitespace-nowrap">
-                      <div className="flex items-center justify-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => onDuplicate(t)}
-                          title="Duplicar movimiento"
-                          className="p-1.5 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors"
-                        >
-                          <Copy className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => onEdit(t)}
-                          title="Editar movimiento"
-                          className="p-1.5 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => setDeletingId(t.id)}
-                          title="Eliminar movimiento"
-                          className="p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                  {/* Card Row 2: Description & notes */}
+                  <div>
+                    <div className="text-xs font-medium text-neutral-900 line-clamp-2">
+                      {t.description}
+                    </div>
+                    {t.notes && (
+                      <div className="text-[11px] text-neutral-500 line-clamp-1 mt-0.5 italic">
+                        {t.notes}
                       </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                    )}
+                  </div>
+
+                  {/* Card Row 3: Meta details (date, payment method) & Quick Actions */}
+                  <div className="flex items-center justify-between pt-1 text-[11px] text-neutral-400 border-t border-neutral-100">
+                    <div className="flex items-center gap-2 font-mono">
+                      <span>{formatDateES(t.date)}</span>
+                      <span>·</span>
+                      <span className="text-neutral-500 flex items-center gap-1">
+                        <CreditCard className="w-3 h-3 text-neutral-400" />
+                        {getPaymentMethodLabel(t.paymentMethod)}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => onDuplicate(t)}
+                        title="Duplicar movimiento"
+                        className="p-1.5 text-neutral-500 hover:text-neutral-800 hover:bg-neutral-100 rounded-md transition-colors"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => onEdit(t)}
+                        title="Editar movimiento"
+                        className="p-1.5 text-neutral-500 hover:text-neutral-800 hover:bg-neutral-100 rounded-md transition-colors"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => setDeletingId(t.id)}
+                        title="Eliminar movimiento"
+                        className="p-1.5 text-neutral-500 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* DESKTOP TABLE VIEW (Screen width >= md) */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-neutral-200/80 bg-neutral-50/70 text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
+                  <th className="py-3 px-4 w-32">Fecha</th>
+                  <th className="py-3 px-4">Descripción</th>
+                  <th className="py-3 px-4 w-44">Categoría</th>
+                  <th className="py-3 px-4 w-36">Método</th>
+                  <th className="py-3 px-4 w-32 text-right">Monto</th>
+                  <th className="py-3 px-4 w-28 text-center no-print">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-100 text-xs">
+                {filteredTransactions.map((t) => {
+                  const isIncome = t.type === 'income';
+                  const catColor = categoryColorMap.get(t.category) || '#94A3B8';
+
+                  return (
+                    <tr
+                      key={t.id}
+                      className="hover:bg-neutral-50/70 transition-colors group"
+                    >
+                      {/* Date */}
+                      <td className="py-3 px-4 font-mono text-neutral-600 tabular-nums whitespace-nowrap">
+                        {formatDateES(t.date)}
+                      </td>
+
+                      {/* Description & optional notes */}
+                      <td className="py-3 px-4">
+                        <div className="font-medium text-neutral-900 line-clamp-1">
+                          {t.description}
+                        </div>
+                        {t.notes && (
+                          <div className="text-[11px] text-neutral-400 line-clamp-1 mt-0.5">
+                            {t.notes}
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Category */}
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="w-2 h-2 rounded-full shrink-0"
+                            style={{ backgroundColor: catColor }}
+                          />
+                          <span className="text-neutral-700 font-medium truncate max-w-[150px]">
+                            {t.category}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Payment Method */}
+                      <td className="py-3 px-4 text-neutral-500 whitespace-nowrap">
+                        {getPaymentMethodLabel(t.paymentMethod)}
+                      </td>
+
+                      {/* Amount */}
+                      <td
+                        className={`py-3 px-4 text-right font-mono font-semibold tabular-nums whitespace-nowrap ${
+                          isIncome ? 'text-emerald-600' : 'text-rose-600'
+                        }`}
+                      >
+                        {isIncome ? '+' : '-'} {formatCurrency(t.amount, currencySymbol)}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="py-3 px-4 text-center no-print whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => onDuplicate(t)}
+                            title="Duplicar movimiento"
+                            className="p-1.5 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => onEdit(t)}
+                            title="Editar movimiento"
+                            className="p-1.5 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded-md transition-colors"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setDeletingId(t.id)}
+                            title="Eliminar movimiento"
+                            className="p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {/* Confirmation Modal for Deletion */}

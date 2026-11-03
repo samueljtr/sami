@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // User Profile document
+    match /users/{userId} {
+      allow get, update: if isOwner(userId) && isValidId(userId);
+      allow create: if isOwner(userId) && isValidId(userId);
+      allow delete: if isOwner(userId) && isValidId(userId);
+      allow list: if isOwner(userId);
+
+      // User Transactions subcollection
+      match /transactions/{transactionId} {
+        allow get, list, create, update, delete: if isOwner(userId) && isValidId(userId);
+      }
+
+      // User Debts subcollection
+      match /debts/{debtId} {
+        allow get, list, create, update, delete: if isOwner(userId) && isValidId(userId);
+      }
+
+      // User Categories subcollection
+      match /categories/{categoryId} {
+        allow get, list, create, update, delete: if isOwner(userId) && isValidId(userId);
+      }
+    }
+  }
+}

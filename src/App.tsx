@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Category, MonthData, Transaction, UserSettings } from './types/finance';
+import {
+  AppTab,
+  Category,
+  DebtAccount,
+  MonthData,
+  Transaction,
+  UserSettings,
+} from './types/finance';
 import {
   loadStoredTransactions,
   saveStoredTransactions,
@@ -7,31 +14,55 @@ import {
   saveStoredCategories,
   loadStoredSettings,
   saveStoredSettings,
+  loadStoredDebts,
+  saveStoredDebts,
   resetToDemoData,
   clearAllTransactions,
-  clearAllData,
   formatCurrency,
 } from './utils/storage';
 import { MONTH_NAMES_ES } from './utils/constants';
-import { Navbar, ActiveTab } from './components/Navbar';
-import { MonthlySummary } from './components/MonthlySummary';
-import { FinanceCharts } from './components/FinanceCharts';
-import { TransactionList } from './components/TransactionList';
-import { BudgetManager } from './components/BudgetManager';
+
+import { useAuth } from './context/AuthContext';
+import {
+  loadFirestoreTransactions,
+  syncAllTransactionsToFirestore,
+  loadFirestoreDebts,
+  syncAllDebtsToFirestore,
+  saveFirestoreUserProfile,
+} from './services/firestoreSync';
+
+import { AppHeader } from './components/AppHeader';
+import { BottomNav } from './components/BottomNav';
+import { ResumenView } from './components/ResumenView';
+import { MovimientosView } from './components/MovimientosView';
+import { GraficosView } from './components/GraficosView';
+import { PresupuestosView } from './components/PresupuestosView';
+import { MeDebenView } from './components/MeDebenView';
+
+import { UserProfileModal } from './components/UserProfileModal';
+import { AuthModal } from './components/AuthModal';
 import { TransactionModal } from './components/TransactionModal';
 import { CategoryModal } from './components/CategoryModal';
+import { SAMI_LOGO_DATA_URL } from './constants/logo';
 import { ExportModal } from './components/ExportModal';
-import { SamiLogo } from './components/SamiLogo';
-import { Plus, Download, BarChart3, Receipt, LayoutDashboard, Target, Sparkles, Trash2 } from 'lucide-react';
+import { Sparkles, Trash2, Lock, UserPlus } from 'lucide-react';
 
 export default function App() {
+  const { user } = useAuth();
+
   // Core persistent states
   const [transactions, setTransactions] = useState<Transaction[]>(() => loadStoredTransactions());
   const [categories, setCategories] = useState<Category[]>(() => loadStoredCategories());
   const [settings, setSettings] = useState<UserSettings>(() => loadStoredSettings());
+  const [debts, setDebts] = useState<DebtAccount[]>(() => loadStoredDebts());
 
-  // UI state
-  const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
+  // Navigation tab state (defaults to 'resumen')
+  const [activeTab, setActiveTab] = useState<AppTab>('resumen');
+
+  // UI modal states
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authRequiredNotice, setAuthRequiredNotice] = useState<string | null>(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -44,7 +75,7 @@ export default function App() {
   const currentRealKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
   const [selectedMonthKey, setSelectedMonthKey] = useState<string>(currentRealKey);
 
-  // Toast trigger
+  // Toast helper
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
@@ -53,7 +84,12 @@ export default function App() {
   // Sync state to localStorage on changes
   useEffect(() => {
     saveStoredTransactions(transactions);
-  }, [transactions]);
+    if (user?.uid) {
+      syncAllTransactionsToFirestore(user.uid, transactions).catch((err) =>
+        console.error('Firestore sync error:', err)
+      );
+    }
+  }, [transactions, user?.uid]);
 
   useEffect(() => {
     saveStoredCategories(categories);
@@ -61,80 +97,51 @@ export default function App() {
 
   useEffect(() => {
     saveStoredSettings(settings);
-  }, [settings]);
-
-  // Compute available months list (from transactions + past 6 months to ensure smooth navigation)
-  const availableMonths = useMemo(() => {
-    const map = new Map<string, { year: number; month: number }>();
-
-    // Add current real month
-    map.set(currentRealKey, {
-      year: today.getFullYear(),
-      month: today.getMonth(),
-    });
-
-    // Add last 6 calendar months
-    for (let i = 1; i <= 6; i++) {
-      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      map.set(key, { year: d.getFullYear(), month: d.getMonth() });
+    if (user?.uid) {
+      saveFirestoreUserProfile(user.uid, settings, user.email).catch((err) =>
+        console.error('Firestore profile sync error:', err)
+      );
     }
+  }, [settings, user?.uid]);
 
-    // Add any months from transactions
-    transactions.forEach((t) => {
-      const parts = t.date.split('-');
-      if (parts.length >= 2) {
-        const y = parseInt(parts[0], 10);
-        const m = parseInt(parts[1], 10) - 1;
-        const key = `${parts[0]}-${parts[1]}`;
-        map.set(key, { year: y, month: m });
+  useEffect(() => {
+    saveStoredDebts(debts);
+    if (user?.uid) {
+      syncAllDebtsToFirestore(user.uid, debts).catch((err) =>
+        console.error('Firestore debts sync error:', err)
+      );
+    }
+  }, [debts, user?.uid]);
+
+  // Synchronize on User login
+  useEffect(() => {
+    if (user?.uid) {
+      showToast(`¡Bienvenido, ${user.displayName || user.email}! Sincronizando con la nube...`);
+      if (user.displayName && user.displayName !== settings.personName) {
+        setSettings((prev) => ({ ...prev, personName: user.displayName || prev.personName }));
       }
-    });
 
-    const list = Array.from(map.entries()).map(([key, val]) => ({
-      key,
-      year: val.year,
-      month: val.month,
-      label: `${MONTH_NAMES_ES[val.month]} ${val.year}`,
-    }));
+      // Fetch cloud transactions
+      loadFirestoreTransactions(user.uid).then((cloudTxs) => {
+        if (cloudTxs.length > 0) {
+          setTransactions(cloudTxs);
+          saveStoredTransactions(cloudTxs);
+        } else if (transactions.length > 0) {
+          syncAllTransactionsToFirestore(user.uid, transactions);
+        }
+      });
 
-    // Sort descending by date
-    return list.sort((a, b) => b.key.localeCompare(a.key));
-  }, [transactions, currentRealKey]);
-
-  // Calculate MonthData for all available months (for comparisons & charts)
-  const allMonthlyData = useMemo<MonthData[]>(() => {
-    // Sort ascending for chronological chart view (last 6 months)
-    const chronologicalMonths = [...availableMonths]
-      .sort((a, b) => a.key.localeCompare(b.key))
-      .slice(-6);
-
-    return chronologicalMonths.map((m) => {
-      const monthTransactions = transactions.filter((t) => t.date.startsWith(m.key));
-      const totalIncome = monthTransactions
-        .filter((t) => t.type === 'income')
-        .reduce((sum, t) => sum + t.amount, 0);
-
-      const totalExpense = monthTransactions
-        .filter((t) => t.type === 'expense')
-        .reduce((sum, t) => sum + t.amount, 0);
-
-      const netSavings = totalIncome - totalExpense;
-      const savingsRate = totalIncome > 0 ? (Math.max(netSavings, 0) / totalIncome) * 100 : 0;
-
-      return {
-        year: m.year,
-        month: m.month,
-        key: m.key,
-        label: m.label,
-        totalIncome,
-        totalExpense,
-        netSavings,
-        savingsRate,
-        transactionsCount: monthTransactions.length,
-      };
-    });
-  }, [availableMonths, transactions]);
+      // Fetch cloud debts
+      loadFirestoreDebts(user.uid).then((cloudDebts) => {
+        if (cloudDebts.length > 0) {
+          setDebts(cloudDebts);
+          saveStoredDebts(cloudDebts);
+        } else if (debts.length > 0) {
+          syncAllDebtsToFirestore(user.uid, debts);
+        }
+      });
+    }
+  }, [user?.uid]);
 
   // Current selected month's transactions
   const currentMonthTransactions = useMemo(() => {
@@ -172,12 +179,6 @@ export default function App() {
     };
   }, [selectedMonthKey, currentMonthTransactions]);
 
-  // Days in selected month
-  const daysInSelectedMonth = useMemo(() => {
-    const [year, month] = selectedMonthKey.split('-').map(Number);
-    return new Date(year, month, 0).getDate();
-  }, [selectedMonthKey]);
-
   // Category breakdown for expenses in selected month
   const categoryExpenses = useMemo(() => {
     const expenseTrans = currentMonthTransactions.filter((t) => t.type === 'expense');
@@ -211,35 +212,6 @@ export default function App() {
     return list.sort((a, b) => b.amount - a.amount);
   }, [currentMonthTransactions, categories]);
 
-  // Month navigation handlers
-  const handlePrevMonth = () => {
-    const [yStr, mStr] = selectedMonthKey.split('-');
-    let y = parseInt(yStr, 10);
-    let m = parseInt(mStr, 10) - 1;
-    if (m === 0) {
-      m = 12;
-      y -= 1;
-    }
-    const newKey = `${y}-${String(m).padStart(2, '0')}`;
-    setSelectedMonthKey(newKey);
-  };
-
-  const handleNextMonth = () => {
-    const [yStr, mStr] = selectedMonthKey.split('-');
-    let y = parseInt(yStr, 10);
-    let m = parseInt(mStr, 10) + 1;
-    if (m === 13) {
-      m = 1;
-      y += 1;
-    }
-    const newKey = `${y}-${String(m).padStart(2, '0')}`;
-    setSelectedMonthKey(newKey);
-  };
-
-  const handleCurrentMonth = () => {
-    setSelectedMonthKey(currentRealKey);
-  };
-
   // Transaction mutations
   const handleSaveTransaction = (
     data: Omit<Transaction, 'id' | 'createdAt'>,
@@ -249,22 +221,18 @@ export default function App() {
       setTransactions((prev) =>
         prev.map((t) => (t.id === existingId ? { ...t, ...data } : t))
       );
-      showToast('Movimiento actualizado con éxito');
+      showToast('Movimiento actualizado');
     } else {
-      const newTransaction: Transaction = {
+      const newTx: Transaction = {
         ...data,
         id: `tx_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
         createdAt: new Date().toISOString(),
       };
-      setTransactions((prev) => [newTransaction, ...prev]);
-
-      // Automatically jump to the month of the added transaction
-      const transMonthKey = data.date.slice(0, 7);
-      if (transMonthKey !== selectedMonthKey) {
-        setSelectedMonthKey(transMonthKey);
-      }
-      showToast('Movimiento registrado correctamente');
+      setTransactions((prev) => [newTx, ...prev]);
+      showToast('Movimiento registrado con éxito');
     }
+    setIsTransactionModalOpen(false);
+    setEditingTransaction(null);
   };
 
   const handleDeleteTransaction = (id: string) => {
@@ -272,201 +240,278 @@ export default function App() {
     showToast('Movimiento eliminado');
   };
 
-  const handleDuplicateTransaction = (transaction: Transaction) => {
-    const dup: Transaction = {
-      ...transaction,
-      id: `tx_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-      createdAt: new Date().toISOString(),
-      date: new Date().toISOString().slice(0, 10),
-    };
-    setTransactions((prev) => [dup, ...prev]);
-    showToast('Movimiento duplicado');
-  };
-
-  // Category mutations
-  const handleAddCategory = (newCatData: Omit<Category, 'id'>) => {
-    const newCat: Category = {
-      ...newCatData,
-      id: `cat_${Date.now()}`,
-    };
-    setCategories((prev) => [...prev, newCat]);
-    showToast('Categoría creada');
-  };
-
-  const handleDeleteCategory = (id: string) => {
-    setCategories((prev) => prev.filter((c) => c.id !== id));
-    showToast('Categoría eliminada');
-  };
-
-  const handleUpdateCategoryBudget = (categoryId: string, newBudget: number) => {
-    setCategories((prev) =>
-      prev.map((c) => (c.id === categoryId ? { ...c, monthlyBudget: newBudget } : c))
+  // Debt action handlers
+  const handleSettleDebt = (debtId: string) => {
+    setDebts((prev) =>
+      prev.map((d) => {
+        if (d.id === debtId) {
+          return {
+            ...d,
+            type: 'settled',
+            statusText: 'Al día',
+            amount: 0,
+          };
+        }
+        return d;
+      })
     );
+    showToast('¡Cuenta saldada en 1 clic! Finanzas actualizadas.');
   };
 
-  // Reset & Backup handlers
-  const handleResetDefaults = () => {
-    if (window.confirm('¿Deseas restaurar los datos de ejemplo iniciales?')) {
-      const { transactions: resetTx, categories: resetCats } = resetToDemoData();
-      setTransactions(resetTx);
-      setCategories(resetCats);
-      setSelectedMonthKey(currentRealKey);
-      showToast('Datos de ejemplo restaurados');
+  const handlePayDebt = (debtId: string) => {
+    setDebts((prev) =>
+      prev.map((d) => {
+        if (d.id === debtId) {
+          return {
+            ...d,
+            type: 'settled',
+            statusText: 'Al día',
+            amount: 0,
+          };
+        }
+        return d;
+      })
+    );
+    showToast('¡Pago registrado con éxito! Balance al día.');
+  };
+
+  const handleWhatsAppReminder = (debt: DebtAccount) => {
+    const textMsg = `Hola ${debt.personName}, te recuerdo con aprecio el pendiente de "${debt.concept}" por ${formatCurrency(debt.amount, settings.currencySymbol || '$')}. ¡Muchas gracias!`;
+    const cleanPhone = debt.phone?.replace(/[^0-9]/g, '') || '';
+    const url = cleanPhone
+      ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(textMsg)}`
+      : `https://wa.me/?text=${encodeURIComponent(textMsg)}`;
+
+    try {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(textMsg);
+      }
+    } catch {
+      // ignore clipboard error
     }
+
+    window.open(url, '_blank', 'noopener,noreferrer');
+    showToast('Abriendo WhatsApp y mensaje copiado al portapapeles');
   };
 
+  const handleApplySavingsChallenge = (amount: number, title: string) => {
+    setSettings((prev) => ({
+      ...prev,
+      monthlySavingsTarget: (prev.monthlySavingsTarget || 500) + amount,
+    }));
+    showToast(`¡Reto aplicado! Meta de ahorro aumentada en +$${amount}.`);
+  };
+
+  // Clear all data to start fresh from 0
   const handleExecuteClearAll = () => {
     clearAllTransactions();
     setTransactions([]);
+    setDebts([]);
+    const clearedCategories = categories.map((c) => ({
+      ...c,
+      spent: 0,
+    }));
+    setCategories(clearedCategories);
+    saveStoredCategories(clearedCategories);
     setIsClearConfirmOpen(false);
-    showToast('¡Datos de prueba vaciados! Tu cuenta está lista para empezar desde cero');
+    showToast('Todos los datos han sido vaciados a 0. ¡Listo para tu primer registro!');
   };
 
-  const handleImportBackup = (backup: any) => {
-    if (backup && Array.isArray(backup.transactions)) {
-      setTransactions(backup.transactions);
-      if (backup.settings) setSettings(backup.settings);
-      showToast('Respaldo restaurado con éxito');
+  // Reset to default demo data
+  const handleResetDefaults = () => {
+    const { transactions: defaultTxs, categories: defaultCats, debts: defaultDebts } = resetToDemoData();
+    setTransactions(defaultTxs);
+    setCategories(defaultCats);
+    setDebts(defaultDebts);
+    showToast('Datos demo restablecidos con éxito');
+  };
+
+  // Category mutations
+  const handleAddCategory = (categoryData: Omit<Category, 'id'>) => {
+    const newCat: Category = {
+      ...categoryData,
+      id: `cat_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+    };
+    setCategories((prev) => [...prev, newCat]);
+    showToast(`Categoría "${newCat.name}" agregada`);
+  };
+
+  const handleDeleteCategory = (catId: string) => {
+    const cat = categories.find((c) => c.id === catId);
+    setCategories((prev) => prev.filter((c) => c.id !== catId));
+    showToast(`Categoría "${cat?.name || ''}" eliminada`);
+  };
+
+  const handleImportBackup = (importedTransactions: Transaction[]) => {
+    setTransactions(importedTransactions);
+    saveStoredTransactions(importedTransactions);
+    showToast(`Copia de seguridad restaurada (${importedTransactions.length} movimientos)`);
+  };
+
+  // Guarded actions requiring user registration/authentication
+  const handleOpenNewExpense = () => {
+    if (!user) {
+      setAuthRequiredNotice(
+        '¡Registro obligatorio! Para poder realizar tu primer registro de gasto o movimiento y guardarlo en la nube, por favor crea tu cuenta o inicia sesión.'
+      );
+      setIsAuthModalOpen(true);
+      return;
     }
+    setEditingTransaction(null);
+    setIsTransactionModalOpen(true);
+  };
+
+  const handleSelectTransaction = (t: Transaction) => {
+    if (!user) {
+      setAuthRequiredNotice(
+        '¡Registro obligatorio! Para modificar este movimiento y sincronizarlo con la nube, por favor crea tu cuenta o inicia sesión.'
+      );
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setEditingTransaction(t);
+    setIsTransactionModalOpen(true);
+  };
+
+  const handleOpenNewLimit = () => {
+    if (!user) {
+      setAuthRequiredNotice(
+        '¡Registro obligatorio! Para configurar nuevos límites de presupuesto y guardarlos en tu cuenta, por favor crea tu cuenta o inicia sesión.'
+      );
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setIsCategoryModalOpen(true);
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 flex flex-col antialiased text-neutral-900 selection:bg-neutral-900 selection:text-white">
-      {/* Top Bar Contract Navigation */}
-      <Navbar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        onOpenNewTransaction={() => {
-          setEditingTransaction(null);
-          setIsTransactionModalOpen(true);
-        }}
-        onOpenExport={() => setIsExportModalOpen(true)}
-        customLogoUrl={settings.customLogoUrl}
-      />
-
-      {/* Main Viewport Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
-        {/* Month Selector & KPI Metrics */}
-        <MonthlySummary
-          currentMonthData={currentMonthData}
-          availableMonths={availableMonths}
-          onSelectMonth={setSelectedMonthKey}
-          onPrevMonth={handlePrevMonth}
-          onNextMonth={handleNextMonth}
-          onCurrentMonth={handleCurrentMonth}
-          isCurrentRealMonth={selectedMonthKey === currentRealKey}
+    <div className="min-h-screen bg-slate-100/70 font-sans text-neutral-900 flex flex-col items-center selection:bg-indigo-500 selection:text-white">
+      {/* Centered App Container matching the mobile screenshots fidelity */}
+      <div className="w-full max-w-md sm:max-w-xl md:max-w-2xl min-h-screen bg-slate-50 flex flex-col relative shadow-sm border-x border-neutral-200/60">
+        {/* Top App Header with tab icon badge and profile avatar */}
+        <AppHeader
+          activeTab={activeTab}
           settings={settings}
-          onClearAllTransactions={() => setIsClearConfirmOpen(true)}
-          totalTransactionsCount={transactions.length}
-          onResetDemoData={handleResetDefaults}
+          onOpenProfile={() => setIsProfileModalOpen(true)}
         />
 
-        {/* View 1: DASHBOARD (Summary + Interactive Charts + Recent Transactions) */}
-        {activeTab === 'dashboard' && (
-          <div className="space-y-6">
-            {/* Interactive Charts Panel */}
-            <FinanceCharts
-              monthlyData={allMonthlyData}
-              selectedMonthKey={selectedMonthKey}
-              onSelectMonth={setSelectedMonthKey}
-              categoryExpenses={categoryExpenses}
-              currentMonthTransactions={currentMonthTransactions}
-              currencySymbol={settings.currencySymbol}
-              daysInMonth={daysInSelectedMonth}
-            />
-
-            {/* Quick Actions & Recent Transactions Split */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-base font-semibold text-neutral-900 tracking-tight">
-                    Movimientos Recientes
-                  </h3>
-                  <p className="text-xs text-neutral-500">
-                    Últimas operaciones registradas para {currentMonthData.label}
+        {/* Main Content Area */}
+        <main className="flex-1 px-4 py-4 sm:px-6 pb-28">
+          {/* Registration Requirement Notice Banner when not authenticated */}
+          {!user && (
+            <div className="mb-4 bg-gradient-to-r from-indigo-600 via-blue-600 to-sky-600 rounded-3xl p-4 text-white shadow-md flex items-center justify-between gap-3 animate-in fade-in duration-200">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-16 h-16 rounded-2xl bg-white p-1 shrink-0 shadow-md border border-white/80 flex items-center justify-center overflow-hidden">
+                  <img
+                    src={SAMI_LOGO_DATA_URL}
+                    alt="Sami Logo Oficial"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-xs sm:text-sm font-bold tracking-tight text-white truncate">
+                    Registro requerido para agregar datos
+                  </h4>
+                  <p className="text-[11px] text-blue-100 leading-snug">
+                    Crea tu cuenta gratuita para registrar tu primer gasto y sincronizar con la nube.
                   </p>
                 </div>
-                <button
-                  onClick={() => setActiveTab('transactions')}
-                  className="text-xs font-semibold text-neutral-900 hover:text-neutral-700 underline underline-offset-4"
-                >
-                  Ver todos ({currentMonthTransactions.length}) &rarr;
-                </button>
               </div>
-
-              <TransactionList
-                transactions={currentMonthTransactions}
-                categories={categories}
-                currencySymbol={settings.currencySymbol}
-                onEdit={(t) => {
-                  setEditingTransaction(t);
-                  setIsTransactionModalOpen(true);
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthRequiredNotice(
+                    '¡Registro obligatorio! Para poder realizar tu primer registro de gasto, crea tu cuenta o inicia sesión.'
+                  );
+                  setIsAuthModalOpen(true);
                 }}
-                onDelete={handleDeleteTransaction}
-                onDuplicate={handleDuplicateTransaction}
-                onAddNew={() => {
-                  setEditingTransaction(null);
-                  setIsTransactionModalOpen(true);
-                }}
-              />
+                className="shrink-0 px-3.5 py-2 bg-white text-indigo-700 hover:bg-neutral-100 text-xs font-bold rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>Registrarme</span>
+              </button>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* View 2: MOVIMIENTOS (Full Ledger) */}
-        {activeTab === 'transactions' && (
-          <div className="space-y-4">
-            <TransactionList
-              transactions={currentMonthTransactions}
-              categories={categories}
-              currencySymbol={settings.currencySymbol}
-              onEdit={(t) => {
-                setEditingTransaction(t);
-                setIsTransactionModalOpen(true);
-              }}
-              onDelete={handleDeleteTransaction}
-              onDuplicate={handleDuplicateTransaction}
-              onAddNew={() => {
-                setEditingTransaction(null);
-                setIsTransactionModalOpen(true);
-              }}
-            />
-          </div>
-        )}
-
-        {/* View 3: GRÁFICOS (Deep Analytics) */}
-        {activeTab === 'charts' && (
-          <div className="space-y-6">
-            <FinanceCharts
-              monthlyData={allMonthlyData}
-              selectedMonthKey={selectedMonthKey}
-              onSelectMonth={setSelectedMonthKey}
-              categoryExpenses={categoryExpenses}
-              currentMonthTransactions={currentMonthTransactions}
-              currencySymbol={settings.currencySymbol}
-              daysInMonth={daysInSelectedMonth}
-            />
-          </div>
-        )}
-
-        {/* View 4: PRESUPUESTOS Y METAS */}
-        {activeTab === 'budgets' && (
-          <div className="space-y-6">
-            <BudgetManager
-              categories={categories}
-              currentMonthTransactions={currentMonthTransactions}
+          {activeTab === 'resumen' && (
+            <ResumenView
+              currentMonthData={currentMonthData}
               settings={settings}
-              onUpdateSettings={setSettings}
-              onUpdateCategoryBudget={handleUpdateCategoryBudget}
-              onResetDefaults={handleResetDefaults}
-              onClearAllTransactions={() => setIsClearConfirmOpen(true)}
-              currencySymbol={settings.currencySymbol}
+              transactions={transactions}
+              debts={debts}
+              onOpenNewExpense={handleOpenNewExpense}
+              onNavigateToDebts={() => setActiveTab('medeben')}
+              onNavigateToTransactions={() => setActiveTab('movimientos')}
             />
-          </div>
-        )}
-      </main>
+          )}
 
-      {/* Modals */}
+          {activeTab === 'movimientos' && (
+            <MovimientosView
+              transactions={transactions}
+              settings={settings}
+              onOpenNewExpense={handleOpenNewExpense}
+              onSelectTransaction={handleSelectTransaction}
+            />
+          )}
+
+          {activeTab === 'graficos' && (
+            <GraficosView
+              currentMonthData={currentMonthData}
+              settings={settings}
+              transactions={transactions}
+              onOpenExportModal={() => setIsExportModalOpen(true)}
+            />
+          )}
+
+          {activeTab === 'presupuestos' && (
+            <PresupuestosView
+              categories={categories}
+              currentMonthData={currentMonthData}
+              settings={settings}
+              onOpenNewLimit={handleOpenNewLimit}
+              onApplySavingsChallenge={handleApplySavingsChallenge}
+            />
+          )}
+
+          {activeTab === 'medeben' && (
+            <MeDebenView
+              debts={debts}
+              settings={settings}
+              onSettleDebt={handleSettleDebt}
+              onPayDebt={handlePayDebt}
+              onWhatsAppReminder={handleWhatsAppReminder}
+            />
+          )}
+        </main>
+
+        {/* Sticky Bottom Navigation with 5 tabs */}
+        <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+      </div>
+
+      {/* Profile & Settings Modal */}
+      <UserProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        settings={settings}
+        onUpdateSettings={setSettings}
+        onOpenExport={() => setIsExportModalOpen(true)}
+        onConfirmClearData={() => setIsClearConfirmOpen(true)}
+        onResetDemoData={handleResetDefaults}
+        onOpenAuthModal={() => setIsAuthModalOpen(true)}
+      />
+
+      {/* Authentication Modal (Login / Register / Google) */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => {
+          setIsAuthModalOpen(false);
+          setAuthRequiredNotice(null);
+        }}
+        requiredMessage={authRequiredNotice || undefined}
+        initialMode="register"
+      />
+
+      {/* New/Edit Movement Modal */}
       <TransactionModal
         isOpen={isTransactionModalOpen}
         onClose={() => {
@@ -484,6 +529,7 @@ export default function App() {
         }}
       />
 
+      {/* Category / Budget Limit Modal */}
       <CategoryModal
         isOpen={isCategoryModalOpen}
         onClose={() => setIsCategoryModalOpen(false)}
@@ -493,6 +539,7 @@ export default function App() {
         currencySymbol={settings.currencySymbol}
       />
 
+      {/* Export CSV / PDF Modal */}
       <ExportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
@@ -506,37 +553,37 @@ export default function App() {
 
       {/* Floating Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-neutral-900 text-white text-xs font-medium px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="fixed bottom-20 z-50 bg-neutral-900/95 text-white text-xs font-semibold px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2 border border-neutral-800 animate-in fade-in slide-in-from-bottom-2 duration-200">
           <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
           <span>{toastMessage}</span>
         </div>
       )}
 
-      {/* Confirmation Dialog for Clearing Demo Data */}
+      {/* Confirmation Dialog for Clearing Data */}
       {isClearConfirmOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/50 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-2xl border border-neutral-200 p-6 max-w-md w-full shadow-2xl">
-            <div className="w-11 h-11 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mb-4">
+          <div className="bg-white rounded-3xl border border-neutral-200 p-6 max-w-md w-full shadow-2xl">
+            <div className="w-11 h-11 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mb-4">
               <Trash2 className="w-5 h-5" />
             </div>
             <h3 className="text-base font-bold text-neutral-900 mb-1.5">
               ¿Vaciar todos los datos de prueba?
             </h3>
             <p className="text-xs text-neutral-600 leading-relaxed mb-6">
-              Se eliminarán todos los movimientos precargados para que comiences a registrar tus ingresos y gastos reales <strong>desde cero en limpio</strong>. Tus categorías y configuración de moneda se conservarán intactas.
+              Se eliminarán todos los movimientos y deudas precargadas para que comiences a registrar tus finanzas <strong>desde cero en limpio</strong>. Tus categorías y configuración se conservarán intactas.
             </p>
             <div className="flex items-center justify-end gap-2.5">
               <button
                 type="button"
                 onClick={() => setIsClearConfirmOpen(false)}
-                className="px-4 py-2 text-xs font-medium text-neutral-700 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200/80 rounded-lg transition-colors"
+                className="px-4 py-2 text-xs font-semibold text-neutral-700 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200/80 rounded-xl transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={handleExecuteClearAll}
-                className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors shadow-xs"
+                className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-colors shadow-xs cursor-pointer"
               >
                 Sí, vaciar y empezar de cero
               </button>
@@ -544,30 +591,6 @@ export default function App() {
           </div>
         </div>
       )}
-
-      {/* Clean quiet footer */}
-      <footer className="border-t border-neutral-200/80 bg-white py-6 text-xs text-neutral-500 no-print">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <SamiLogo size="sm" showText={true} showTagline={true} customLogoUrl={settings.customLogoUrl} />
-          </div>
-          <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 text-neutral-400 text-center md:text-right">
-            <span>Privacidad total - Tus finanzas almacenadas de forma local en tu navegador.</span>
-            <span className="hidden sm:inline" aria-hidden="true">·</span>
-            <span>
-              Desarrollado por :{' '}
-              <a
-                href="https://www.linkedin.com/in/sjtr"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-neutral-700 hover:text-neutral-900 underline underline-offset-2 transition-colors font-medium"
-              >
-                https://www.linkedin.com/in/sjtr
-              </a>
-            </span>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

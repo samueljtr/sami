@@ -168,7 +168,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           </div>
 
           {/* Monto & Fecha */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
               <label className="block text-xs font-medium text-neutral-700 mb-1">
                 Monto ({currencySymbol}) *
@@ -185,7 +185,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                   placeholder="0.00"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 text-sm font-mono font-medium rounded-lg border border-neutral-300 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none tabular-nums transition-colors"
+                  className="w-full pl-8 pr-3 py-2.5 sm:py-2 text-base sm:text-sm font-mono font-medium rounded-lg border border-neutral-300 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none tabular-nums transition-colors"
                 />
               </div>
             </div>
@@ -200,7 +200,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                   required
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-neutral-300 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none transition-colors"
+                  className="w-full px-3 py-2.5 sm:py-2 text-base sm:text-sm rounded-lg border border-neutral-300 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none transition-colors"
                 />
               </div>
             </div>
@@ -217,7 +217,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
               placeholder={type === 'expense' ? 'Ej. Supermercado, Factura de luz, Cine...' : 'Ej. Nómina quincenal, Venta freelance...'}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-neutral-300 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none transition-colors"
+              className="w-full px-3 py-2.5 sm:py-2 text-base sm:text-sm rounded-lg border border-neutral-300 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none transition-colors"
             />
           </div>
 
@@ -241,7 +241,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-neutral-300 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none bg-white transition-colors"
+              className="w-full px-3 py-2.5 sm:py-2 text-base sm:text-sm rounded-lg border border-neutral-300 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none bg-white transition-colors"
             >
               {filteredCategories.map((c) => (
                 <option key={c.id} value={c.name}>
@@ -259,7 +259,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             <select
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-neutral-300 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none bg-white transition-colors"
+              className="w-full px-3 py-2.5 sm:py-2 text-base sm:text-sm rounded-lg border border-neutral-300 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none bg-white transition-colors"
             >
               {PAYMENT_METHODS.map((pm) => (
                 <option key={pm.id} value={pm.id}>
@@ -279,7 +279,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
               placeholder="Detalles adicionales, recibo, factura..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-lg border border-neutral-300 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none transition-colors resize-none"
+              className="w-full px-3 py-2 text-base sm:text-xs rounded-lg border border-neutral-300 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none transition-colors resize-none"
             />
           </div>
 
@@ -288,13 +288,13 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-medium text-neutral-700 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200/80 rounded-lg transition-colors"
+              className="flex-1 sm:flex-initial px-4 py-2.5 sm:py-2 text-xs font-medium text-neutral-700 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200/80 rounded-lg transition-colors text-center"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className={`px-4 py-2 text-xs font-semibold text-white rounded-lg transition-colors shadow-xs ${
+              className={`flex-1 sm:flex-initial px-4 py-2.5 sm:py-2 text-xs font-semibold text-white rounded-lg transition-colors shadow-xs text-center ${
                 type === 'expense'
                   ? 'bg-rose-600 hover:bg-rose-700'
                   : 'bg-emerald-600 hover:bg-emerald-700'
