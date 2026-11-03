@@ -5,11 +5,20 @@ import {
   setDoc,
   writeBatch,
 } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from './firebase';
+import { auth, db, handleFirestoreError, OperationType } from './firebase';
 import { Category, DebtAccount, Transaction, UserSettings } from '../types/finance';
+
+/**
+ * Checks if the client has an active Firebase Auth session matching the target UID.
+ * This prevents unnecessary permission denied errors when operating in local auth mode.
+ */
+function isCloudAuthReady(targetUid: string): boolean {
+  return Boolean(auth.currentUser && auth.currentUser.uid === targetUid);
+}
 
 // User Profile
 export async function saveFirestoreUserProfile(uid: string, settings: UserSettings, email?: string | null) {
+  if (!isCloudAuthReady(uid)) return;
   const path = `users/${uid}`;
   try {
     await setDoc(
@@ -33,6 +42,7 @@ export async function saveFirestoreUserProfile(uid: string, settings: UserSettin
 
 // User Transactions
 export async function loadFirestoreTransactions(uid: string): Promise<Transaction[]> {
+  if (!isCloudAuthReady(uid)) return [];
   const path = `users/${uid}/transactions`;
   try {
     const snap = await getDocs(collection(db, 'users', uid, 'transactions'));
@@ -44,6 +54,7 @@ export async function loadFirestoreTransactions(uid: string): Promise<Transactio
 }
 
 export async function saveFirestoreTransaction(uid: string, tx: Transaction) {
+  if (!isCloudAuthReady(uid)) return;
   const path = `users/${uid}/transactions/${tx.id}`;
   try {
     await setDoc(doc(db, 'users', uid, 'transactions', tx.id), tx);
@@ -53,6 +64,7 @@ export async function saveFirestoreTransaction(uid: string, tx: Transaction) {
 }
 
 export async function syncAllTransactionsToFirestore(uid: string, transactions: Transaction[]) {
+  if (!isCloudAuthReady(uid)) return;
   const path = `users/${uid}/transactions`;
   try {
     const batch = writeBatch(db);
@@ -68,6 +80,7 @@ export async function syncAllTransactionsToFirestore(uid: string, transactions: 
 
 // User Debts
 export async function loadFirestoreDebts(uid: string): Promise<DebtAccount[]> {
+  if (!isCloudAuthReady(uid)) return [];
   const path = `users/${uid}/debts`;
   try {
     const snap = await getDocs(collection(db, 'users', uid, 'debts'));
@@ -79,6 +92,7 @@ export async function loadFirestoreDebts(uid: string): Promise<DebtAccount[]> {
 }
 
 export async function syncAllDebtsToFirestore(uid: string, debts: DebtAccount[]) {
+  if (!isCloudAuthReady(uid)) return;
   const path = `users/${uid}/debts`;
   try {
     const batch = writeBatch(db);

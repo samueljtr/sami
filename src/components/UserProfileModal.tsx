@@ -7,8 +7,6 @@ import {
   User,
   DollarSign,
   FileDown,
-  Trash2,
-  RotateCcw,
   Check,
   LogIn,
   LogOut,
@@ -17,14 +15,14 @@ import {
 } from 'lucide-react';
 import { SAMI_LOGO_DATA_URL } from '../constants/logo';
 
+import { getTotalUserCount } from '../utils/localAuth';
+
 interface UserProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
   settings: UserSettings;
   onUpdateSettings: (newSettings: UserSettings) => void;
   onOpenExport: () => void;
-  onConfirmClearData: () => void;
-  onResetDemoData: () => void;
   onOpenAuthModal: () => void;
 }
 
@@ -34,13 +32,9 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   settings,
   onUpdateSettings,
   onOpenExport,
-  onConfirmClearData,
-  onResetDemoData,
   onOpenAuthModal,
 }) => {
   const { user, logout } = useAuth();
-
-  if (!isOpen) return null;
 
   const [personName, setPersonName] = useState(
     user?.displayName || settings.personName || 'Josué'
@@ -49,6 +43,18 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   const [budgetTotal, setBudgetTotal] = useState(String(settings.monthlyBudgetTotal || 2000));
   const [savingsTarget, setSavingsTarget] = useState(String(settings.monthlySavingsTarget || 500));
   const [savedFeedback, setSavedFeedback] = useState(false);
+
+  // Sync state whenever modal opens or settings change
+  React.useEffect(() => {
+    if (isOpen) {
+      setPersonName(user?.displayName || settings.personName || 'Josué');
+      setCurrency(settings.currency || 'USD');
+      setBudgetTotal(String(settings.monthlyBudgetTotal || 2000));
+      setSavingsTarget(String(settings.monthlySavingsTarget || 500));
+    }
+  }, [isOpen, settings, user]);
+
+  if (!isOpen) return null;
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,12 +123,15 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                 <Cloud className="w-4 h-4" />
               </div>
               <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="text-xs font-bold text-indigo-950 truncate">
                     {user.displayName || 'Usuario'}
                   </span>
                   <span className="inline-flex items-center gap-0.5 bg-emerald-100 text-emerald-800 text-[9px] font-bold px-1.5 py-0.2 rounded-full">
-                    <ShieldCheck className="w-2.5 h-2.5" /> En la nube
+                    <ShieldCheck className="w-2.5 h-2.5" /> Cuenta activa
+                  </span>
+                  <span className="inline-flex items-center gap-0.5 bg-indigo-100 text-indigo-800 text-[9px] font-bold px-1.5 py-0.2 rounded-full" title="Total de usuarios registrados en el sistema">
+                    {Math.max(1, getTotalUserCount())} {Math.max(1, getTotalUserCount()) === 1 ? 'usuario registrado' : 'usuarios registrados'}
                   </span>
                 </div>
                 <p className="text-[11px] text-indigo-600 truncate mt-0.5">
@@ -257,32 +266,6 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
             <FileDown className="w-4 h-4 text-indigo-600" />
             Exportar Datos (CSV / PDF)
           </button>
-
-          <div className="grid grid-cols-2 gap-2 pt-1">
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
-                onConfirmClearData();
-              }}
-              className="py-2 px-2 text-[11px] font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100/70 rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              Vaciar a 0
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                onResetDemoData();
-                onClose();
-              }}
-              className="py-2 px-2 text-[11px] font-semibold text-neutral-600 hover:text-neutral-800 bg-neutral-100 hover:bg-neutral-200/70 rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              Restablecer demo
-            </button>
-          </div>
         </div>
 
         {/* Footer credits */}

@@ -10,7 +10,6 @@ import {
   ArrowRight,
   X,
   AlertCircle,
-  Zap,
   CheckCircle2,
   KeyRound,
 } from 'lucide-react';
@@ -76,22 +75,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         onClose?.();
       }
     } catch (err: any) {
-      console.error('Auth error:', err);
       const code = err?.code || '';
-      if (code === 'auth/invalid-credential' || code === 'auth/wrong-password') {
+      const message = err?.message || '';
+
+      if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
         setErrorMsg('Correo o contraseña incorrectos.');
       } else if (code === 'auth/user-not-found') {
-        setErrorMsg('No encontramos ninguna cuenta registrada con este correo.');
+        setErrorMsg('No encontramos ninguna cuenta con este correo. Cambia a "Registrarse".');
       } else if (code === 'auth/email-already-in-use') {
-        setErrorMsg('Este correo ya está registrado. Intenta iniciar sesión.');
+        setErrorMsg('Este correo ya está registrado en Sami. Inicia sesión con tu contraseña.');
       } else if (code === 'auth/weak-password') {
-        setErrorMsg('La contraseña es demasiado débil (mínimo 6 caracteres).');
+        setErrorMsg('La contraseña debe tener al menos 6 caracteres.');
       } else if (code === 'auth/invalid-email') {
         setErrorMsg('El formato del correo electrónico no es válido.');
-      } else if (code === 'auth/too-many-requests') {
-        setErrorMsg('Demasiados intentos. Espera unos momentos antes de reintentar.');
       } else {
-        setErrorMsg('Ocurrió un error al procesar tu solicitud. Verifica tus datos.');
+        console.warn('Unhandled auth error:', err);
+        setErrorMsg(message || 'Verifica tus datos e intenta nuevamente.');
       }
     } finally {
       setLoading(false);
@@ -106,8 +105,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       onClose?.();
     } catch (err: any) {
       console.error('Google auth error:', err);
-      if (err?.code !== 'auth/popup-closed-by-user') {
-        setErrorMsg('No se pudo iniciar sesión con Google.');
+      const code = err?.code || '';
+      if (code !== 'auth/popup-closed-by-user') {
+        setErrorMsg('No se pudo completar el acceso con Google en esta ventana. Puedes registrarte con tu correo arriba.');
       }
     } finally {
       setLoading(false);
@@ -150,10 +150,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </h3>
           <p className="text-xs text-neutral-500 max-w-xs mx-auto">
             {mode === 'forgot'
-              ? 'Te enviaremos un correo seguro con el enlace para restablecer tu contraseña.'
+              ? 'Ingresa tu correo para crear una nueva contraseña.'
               : mode === 'login'
               ? 'Accede a tus finanzas y cuentas compartidas desde cualquier dispositivo.'
-              : 'Tus datos se guardarán de forma cifrada y segura en la nube.'}
+              : 'Tus finanzas y presupuestos se guardarán protegidos en tu cuenta.'}
           </p>
         </div>
 
@@ -215,11 +215,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </div>
         )}
 
-        {/* Error Alert */}
+        {/* Standard Clean Error Alert */}
         {errorMsg && (
           <div className="p-3 bg-rose-50 border border-rose-200/80 rounded-2xl flex items-center gap-2.5 text-xs text-rose-700 font-medium">
             <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-            <span>{errorMsg}</span>
+            <span className="leading-snug">{errorMsg}</span>
           </div>
         )}
 
@@ -229,12 +229,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
               <CheckCircle2 className="w-6 h-6" />
             </div>
-            <h4 className="text-sm font-bold text-emerald-900">¡Enlace de recuperación enviado!</h4>
+            <h4 className="text-sm font-bold text-emerald-900">¡Listo!</h4>
             <p className="text-xs text-emerald-800 leading-relaxed">
-              Hemos enviado las instrucciones a <strong>{email}</strong>. Abre el enlace del correo para crear tu nueva contraseña.
-            </p>
-            <p className="text-[11px] text-emerald-700">
-              💡 Si no lo encuentras en unos minutos, revisa tu carpeta de <em>Spam</em> o <em>Correo no deseado</em>.
+              Hemos procesado tu solicitud para <strong>{email}</strong>. Puedes ingresar con tu nueva contraseña.
             </p>
             <button
               type="button"
@@ -339,7 +336,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <>
                   <span>
                     {mode === 'forgot'
-                      ? 'Enviar enlace de recuperación'
+                      ? 'Restablecer contraseña'
                       : mode === 'login'
                       ? 'Iniciar Sesión'
                       : 'Crear Cuenta'}
@@ -365,7 +362,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               type="button"
               onClick={handleGoogleSignIn}
               disabled={loading}
-              className="w-full py-2.5 px-4 bg-white hover:bg-neutral-50 border border-neutral-200/90 text-neutral-800 text-xs font-bold rounded-2xl transition-all shadow-2xs flex items-center justify-center gap-2.5 cursor-pointer active:scale-98"
+              className="w-full py-2.5 px-4 bg-white hover:bg-neutral-50 border border-neutral-300 text-neutral-800 text-xs font-bold rounded-2xl transition-all shadow-xs hover:shadow-md flex items-center justify-center gap-2.5 cursor-pointer active:scale-98"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
                 <path

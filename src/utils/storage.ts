@@ -39,14 +39,19 @@ export function loadStoredTransactions(): Transaction[] {
   try {
     const raw = localStorage.getItem(TRANSACTIONS_KEY);
     if (!raw) {
-      const initial = getInitialDemoTransactions();
-      saveStoredTransactions(initial);
-      return initial;
+      saveStoredTransactions([]);
+      return [];
     }
-    return JSON.parse(raw);
+    const parsed: Transaction[] = JSON.parse(raw);
+    // Ensure any previously loaded demo movements are cleaned so app has 0 by default
+    const realOnly = parsed.filter((t) => !t.id.startsWith('demo_'));
+    if (realOnly.length !== parsed.length) {
+      saveStoredTransactions(realOnly);
+    }
+    return realOnly;
   } catch (err) {
     console.error('Error loading transactions from localStorage:', err);
-    return getInitialDemoTransactions();
+    return [];
   }
 }
 
@@ -65,7 +70,12 @@ export function loadStoredCategories(): Category[] {
       saveStoredCategories(DEFAULT_CATEGORIES);
       return DEFAULT_CATEGORIES;
     }
-    return JSON.parse(raw);
+    const parsed: Category[] = JSON.parse(raw);
+    // Ensure clean initial spent values when no movements exist
+    return parsed.map((c) => ({
+      ...c,
+      spent: 0,
+    }));
   } catch (err) {
     console.error('Error loading categories from localStorage:', err);
     return DEFAULT_CATEGORIES;
@@ -106,13 +116,18 @@ export function loadStoredDebts(): DebtAccount[] {
   try {
     const raw = localStorage.getItem(DEBTS_KEY);
     if (!raw) {
-      saveStoredDebts(DEFAULT_DEBTS);
-      return DEFAULT_DEBTS;
+      saveStoredDebts([]);
+      return [];
     }
-    return JSON.parse(raw);
+    const parsed: DebtAccount[] = JSON.parse(raw);
+    const realOnly = parsed.filter((d) => !d.id.startsWith('debt_'));
+    if (realOnly.length !== parsed.length) {
+      saveStoredDebts(realOnly);
+    }
+    return realOnly;
   } catch (err) {
     console.error('Error loading debts from localStorage:', err);
-    return DEFAULT_DEBTS;
+    return [];
   }
 }
 

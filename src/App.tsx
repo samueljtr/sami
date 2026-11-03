@@ -16,8 +16,6 @@ import {
   saveStoredSettings,
   loadStoredDebts,
   saveStoredDebts,
-  resetToDemoData,
-  clearAllTransactions,
   formatCurrency,
 } from './utils/storage';
 import { MONTH_NAMES_ES } from './utils/constants';
@@ -45,7 +43,7 @@ import { TransactionModal } from './components/TransactionModal';
 import { CategoryModal } from './components/CategoryModal';
 import { SAMI_LOGO_DATA_URL } from './constants/logo';
 import { ExportModal } from './components/ExportModal';
-import { Sparkles, Trash2, Lock, UserPlus } from 'lucide-react';
+import { Sparkles, Lock, UserPlus } from 'lucide-react';
 
 export default function App() {
   const { user } = useAuth();
@@ -66,7 +64,6 @@ export default function App() {
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -85,9 +82,7 @@ export default function App() {
   useEffect(() => {
     saveStoredTransactions(transactions);
     if (user?.uid) {
-      syncAllTransactionsToFirestore(user.uid, transactions).catch((err) =>
-        console.error('Firestore sync error:', err)
-      );
+      syncAllTransactionsToFirestore(user.uid, transactions).catch(() => {});
     }
   }, [transactions, user?.uid]);
 
@@ -98,25 +93,21 @@ export default function App() {
   useEffect(() => {
     saveStoredSettings(settings);
     if (user?.uid) {
-      saveFirestoreUserProfile(user.uid, settings, user.email).catch((err) =>
-        console.error('Firestore profile sync error:', err)
-      );
+      saveFirestoreUserProfile(user.uid, settings, user.email).catch(() => {});
     }
   }, [settings, user?.uid]);
 
   useEffect(() => {
     saveStoredDebts(debts);
     if (user?.uid) {
-      syncAllDebtsToFirestore(user.uid, debts).catch((err) =>
-        console.error('Firestore debts sync error:', err)
-      );
+      syncAllDebtsToFirestore(user.uid, debts).catch(() => {});
     }
   }, [debts, user?.uid]);
 
   // Synchronize on User login
   useEffect(() => {
     if (user?.uid) {
-      showToast(`¡Bienvenido, ${user.displayName || user.email}! Sincronizando con la nube...`);
+      showToast(`¡Bienvenido, ${user.displayName || user.email}!`);
       if (user.displayName && user.displayName !== settings.personName) {
         setSettings((prev) => ({ ...prev, personName: user.displayName || prev.personName }));
       }
@@ -127,9 +118,9 @@ export default function App() {
           setTransactions(cloudTxs);
           saveStoredTransactions(cloudTxs);
         } else if (transactions.length > 0) {
-          syncAllTransactionsToFirestore(user.uid, transactions);
+          syncAllTransactionsToFirestore(user.uid, transactions).catch(() => {});
         }
-      });
+      }).catch(() => {});
 
       // Fetch cloud debts
       loadFirestoreDebts(user.uid).then((cloudDebts) => {
@@ -137,9 +128,9 @@ export default function App() {
           setDebts(cloudDebts);
           saveStoredDebts(cloudDebts);
         } else if (debts.length > 0) {
-          syncAllDebtsToFirestore(user.uid, debts);
+          syncAllDebtsToFirestore(user.uid, debts).catch(() => {});
         }
-      });
+      }).catch(() => {});
     }
   }, [user?.uid]);
 
@@ -300,30 +291,6 @@ export default function App() {
       monthlySavingsTarget: (prev.monthlySavingsTarget || 500) + amount,
     }));
     showToast(`¡Reto aplicado! Meta de ahorro aumentada en +$${amount}.`);
-  };
-
-  // Clear all data to start fresh from 0
-  const handleExecuteClearAll = () => {
-    clearAllTransactions();
-    setTransactions([]);
-    setDebts([]);
-    const clearedCategories = categories.map((c) => ({
-      ...c,
-      spent: 0,
-    }));
-    setCategories(clearedCategories);
-    saveStoredCategories(clearedCategories);
-    setIsClearConfirmOpen(false);
-    showToast('Todos los datos han sido vaciados a 0. ¡Listo para tu primer registro!');
-  };
-
-  // Reset to default demo data
-  const handleResetDefaults = () => {
-    const { transactions: defaultTxs, categories: defaultCats, debts: defaultDebts } = resetToDemoData();
-    setTransactions(defaultTxs);
-    setCategories(defaultCats);
-    setDebts(defaultDebts);
-    showToast('Datos demo restablecidos con éxito');
   };
 
   // Category mutations
@@ -495,8 +462,6 @@ export default function App() {
         settings={settings}
         onUpdateSettings={setSettings}
         onOpenExport={() => setIsExportModalOpen(true)}
-        onConfirmClearData={() => setIsClearConfirmOpen(true)}
-        onResetDemoData={handleResetDefaults}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
       />
 
@@ -556,39 +521,6 @@ export default function App() {
         <div className="fixed bottom-20 z-50 bg-neutral-900/95 text-white text-xs font-semibold px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2 border border-neutral-800 animate-in fade-in slide-in-from-bottom-2 duration-200">
           <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
           <span>{toastMessage}</span>
-        </div>
-      )}
-
-      {/* Confirmation Dialog for Clearing Data */}
-      {isClearConfirmOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/50 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl border border-neutral-200 p-6 max-w-md w-full shadow-2xl">
-            <div className="w-11 h-11 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mb-4">
-              <Trash2 className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-neutral-900 mb-1.5">
-              ¿Vaciar todos los datos de prueba?
-            </h3>
-            <p className="text-xs text-neutral-600 leading-relaxed mb-6">
-              Se eliminarán todos los movimientos y deudas precargadas para que comiences a registrar tus finanzas <strong>desde cero en limpio</strong>. Tus categorías y configuración se conservarán intactas.
-            </p>
-            <div className="flex items-center justify-end gap-2.5">
-              <button
-                type="button"
-                onClick={() => setIsClearConfirmOpen(false)}
-                className="px-4 py-2 text-xs font-semibold text-neutral-700 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200/80 rounded-xl transition-colors cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleExecuteClearAll}
-                className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-colors shadow-xs cursor-pointer"
-              >
-                Sí, vaciar y empezar de cero
-              </button>
-            </div>
-          </div>
         </div>
       )}
     </div>
