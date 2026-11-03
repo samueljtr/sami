@@ -404,6 +404,17 @@ app.post('/api/user/sync', (req, res) => {
   }
 });
 
+// Ensure any unhandled /api/* route ALWAYS returns JSON 404, never falling into Vite SPA HTML
+app.all('/api/*', (req, res) => {
+  res.status(404).json({ error: 'Endpoint no encontrado', code: 'api_not_found' });
+});
+
+// JSON Error handler for /api
+app.use('/api', (err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('API Error handler:', err);
+  res.status(500).json({ error: 'Error interno en el servidor', code: 'api_server_error' });
+});
+
 // ----------------------------------------------------
 // VITE SPA MIDDLEWARE / STATIC ASSETS
 // ----------------------------------------------------

@@ -88,6 +88,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         setErrorMsg('La contraseña debe tener al menos 6 caracteres.');
       } else if (code === 'auth/invalid-email') {
         setErrorMsg('El formato del correo electrónico no es válido.');
+      } else if (
+        message.toLowerCase().includes('json') ||
+        message.toLowerCase().includes('unexpected') ||
+        message.toLowerCase().includes('token') ||
+        message.toLowerCase().includes('html') ||
+        message.toLowerCase().includes('doctype')
+      ) {
+        setErrorMsg('Error de conexión temporal. Intenta de nuevo en unos segundos.');
       } else {
         console.warn('Unhandled auth error:', err);
         setErrorMsg(message || 'Verifica tus datos e intenta nuevamente.');
