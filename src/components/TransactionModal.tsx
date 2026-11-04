@@ -9,6 +9,7 @@ interface TransactionModalProps {
   onSave: (transaction: Omit<Transaction, 'id' | 'createdAt'>, existingId?: string) => void;
   categories: Category[];
   initialTransaction?: Transaction | null;
+  initialType?: TransactionType;
   currencySymbol: string;
   defaultDate?: string;
   onOpenCategoryManager?: () => void;
@@ -20,11 +21,12 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   onSave,
   categories,
   initialTransaction,
+  initialType = 'expense',
   currencySymbol,
   defaultDate,
   onOpenCategoryManager,
 }) => {
-  const [type, setType] = useState<TransactionType>('expense');
+  const [type, setType] = useState<TransactionType>(initialType);
   const [amount, setAmount] = useState<string>('');
   const [category, setCategory] = useState<string>('');
   const [date, setDate] = useState<string>('');
@@ -43,20 +45,21 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       setPaymentMethod(initialTransaction.paymentMethod);
       setNotes(initialTransaction.notes || '');
     } else {
-      // New transaction defaults
-      setType('expense');
+      // New transaction defaults with selected type from emerging choice
+      const targetType = initialType || 'expense';
+      setType(targetType);
       setAmount('');
       const today = defaultDate || new Date().toISOString().slice(0, 10);
       setDate(today);
       setDescription('');
       setPaymentMethod('debit');
       setNotes('');
-      // Set default category for expense
-      const firstExp = categories.find((c) => c.type === 'expense');
-      setCategory(firstExp ? firstExp.name : '');
+      // Set default category for target type
+      const firstCat = categories.find((c) => c.type === targetType);
+      setCategory(firstCat ? firstCat.name : '');
     }
     setError('');
-  }, [initialTransaction, isOpen, defaultDate, categories]);
+  }, [initialTransaction, initialType, isOpen, defaultDate, categories]);
 
   // Update default category when switching type if current doesn't match
   const handleTypeChange = (newType: TransactionType) => {

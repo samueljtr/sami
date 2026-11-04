@@ -5,6 +5,7 @@ import {
   DebtAccount,
   MonthData,
   Transaction,
+  TransactionType,
   UserSettings,
 } from './types/finance';
 import {
@@ -33,6 +34,7 @@ import { MeDebenView } from './components/MeDebenView';
 
 import { UserProfileModal } from './components/UserProfileModal';
 import { AuthModal } from './components/AuthModal';
+import { MovementTypeModal } from './components/MovementTypeModal';
 import { TransactionModal } from './components/TransactionModal';
 import { CategoryModal } from './components/CategoryModal';
 import { SAMI_LOGO_DATA_URL } from './constants/logo';
@@ -55,6 +57,8 @@ export default function App() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authRequiredNotice, setAuthRequiredNotice] = useState<string | null>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isMovementTypeModalOpen, setIsMovementTypeModalOpen] = useState(false);
+  const [selectedMovementType, setSelectedMovementType] = useState<TransactionType>('expense');
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -383,12 +387,18 @@ export default function App() {
   const handleOpenNewExpense = () => {
     if (!user) {
       setAuthRequiredNotice(
-        '¡Registro obligatorio! Para poder realizar tu primer registro de gasto y sincronizarlo entre tu PC y celular, por favor crea tu cuenta o inicia sesión.'
+        '¡Registro obligatorio! Para poder realizar tu primer registro y sincronizarlo entre tu PC y celular, por favor crea tu cuenta o inicia sesión.'
       );
       setIsAuthModalOpen(true);
       return;
     }
     setEditingTransaction(null);
+    setIsMovementTypeModalOpen(true);
+  };
+
+  const handleSelectMovementType = (chosenType: TransactionType) => {
+    setSelectedMovementType(chosenType);
+    setIsMovementTypeModalOpen(false);
     setIsTransactionModalOpen(true);
   };
 
@@ -401,6 +411,7 @@ export default function App() {
       return;
     }
     setEditingTransaction(t);
+    setSelectedMovementType(t.type);
     setIsTransactionModalOpen(true);
   };
 
@@ -479,6 +490,7 @@ export default function App() {
           {activeTab === 'movimientos' && (
             <MovimientosView
               transactions={transactions}
+              categories={categories}
               settings={settings}
               onOpenNewExpense={handleOpenNewExpense}
               onSelectTransaction={handleSelectTransaction}
@@ -501,6 +513,7 @@ export default function App() {
               settings={settings}
               onOpenNewLimit={handleOpenNewLimit}
               onApplySavingsChallenge={handleApplySavingsChallenge}
+              onUpdateSettings={setSettings}
             />
           )}
 
@@ -540,6 +553,13 @@ export default function App() {
         initialMode="register"
       />
 
+      {/* Emerging Movement Type Selector Modal: Ingreso o Gasto */}
+      <MovementTypeModal
+        isOpen={isMovementTypeModalOpen}
+        onClose={() => setIsMovementTypeModalOpen(false)}
+        onSelectType={handleSelectMovementType}
+      />
+
       {/* New/Edit Movement Modal */}
       <TransactionModal
         isOpen={isTransactionModalOpen}
@@ -550,6 +570,7 @@ export default function App() {
         onSave={handleSaveTransaction}
         categories={categories}
         initialTransaction={editingTransaction}
+        initialType={selectedMovementType}
         currencySymbol={settings.currencySymbol}
         defaultDate={`${selectedMonthKey}-01`}
         onOpenCategoryManager={() => {

@@ -14,9 +14,12 @@ import {
   Tag,
   ArrowUpDown,
 } from 'lucide-react';
+import { renderCategoryIcon } from '../utils/categoryIcons';
+import { Category } from '../types/finance';
 
 interface MovimientosViewProps {
   transactions: Transaction[];
+  categories?: Category[];
   settings: UserSettings;
   onOpenNewExpense: () => void;
   onSelectTransaction?: (t: Transaction) => void;
@@ -24,6 +27,7 @@ interface MovimientosViewProps {
 
 export const MovimientosView: React.FC<MovimientosViewProps> = ({
   transactions,
+  categories = [],
   settings,
   onOpenNewExpense,
   onSelectTransaction,
@@ -44,6 +48,18 @@ export const MovimientosView: React.FC<MovimientosViewProps> = ({
 
   // Helper to get category icon and color
   const getCategoryIconDetails = (catName: string, desc: string) => {
+    const matching = categories.find(
+      (c) => c.name.toLowerCase() === catName.toLowerCase()
+    );
+    if (matching) {
+      return {
+        icon: renderCategoryIcon(matching.icon, 'w-5 h-5 text-white'),
+        bg: '',
+        bgColor: matching.color || '#4F46E5',
+        isCustom: true,
+      };
+    }
+
     const text = (catName + ' ' + desc).toLowerCase();
     if (text.includes('comida') || text.includes('tapa') || text.includes('restaurante') || text.includes('pizza') || text.includes('aliment')) {
       return {
@@ -265,7 +281,8 @@ export const MovimientosView: React.FC<MovimientosViewProps> = ({
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <div
-                          className={`w-11 h-11 rounded-2xl ${iconDetails.bg} flex items-center justify-center shrink-0 shadow-xs`}
+                          className={`w-11 h-11 rounded-2xl ${iconDetails.bg || ''} flex items-center justify-center shrink-0 shadow-xs`}
+                          style={iconDetails.bgColor ? { backgroundColor: iconDetails.bgColor } : undefined}
                         >
                           {iconDetails.icon}
                         </div>

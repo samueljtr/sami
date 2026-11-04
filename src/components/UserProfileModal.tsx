@@ -39,8 +39,6 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     user?.displayName || settings.personName || 'Josué'
   );
   const [currency, setCurrency] = useState(settings.currency || 'USD');
-  const [budgetTotal, setBudgetTotal] = useState(String(settings.monthlyBudgetTotal || 2000));
-  const [savingsTarget, setSavingsTarget] = useState(String(settings.monthlySavingsTarget || 500));
   const [savedFeedback, setSavedFeedback] = useState(false);
   const [cloudUsersCount, setCloudUsersCount] = useState<number>(1);
 
@@ -49,8 +47,6 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     if (isOpen) {
       setPersonName(user?.displayName || settings.personName || 'Josué');
       setCurrency(settings.currency || 'USD');
-      setBudgetTotal(String(settings.monthlyBudgetTotal || 2000));
-      setSavingsTarget(String(settings.monthlySavingsTarget || 500));
       getCloudUserCount().then((c) => setCloudUsersCount(c)).catch(() => {});
     }
   }, [isOpen, settings, user]);
@@ -65,8 +61,6 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
       personName: personName.trim() || 'Josué',
       currency,
       currencySymbol: currObj ? currObj.symbol : '$',
-      monthlyBudgetTotal: parseFloat(budgetTotal) || 2000,
-      monthlySavingsTarget: parseFloat(savingsTarget) || 500,
     });
     setSavedFeedback(true);
     setTimeout(() => {
@@ -213,30 +207,11 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-bold text-neutral-800 block mb-1">
-                Presupuesto Mes
-              </label>
-              <input
-                type="number"
-                value={budgetTotal}
-                onChange={(e) => setBudgetTotal(e.target.value)}
-                className="w-full px-3 py-2 text-xs font-semibold bg-neutral-50 border border-neutral-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-neutral-800 block mb-1">
-                Meta de Ahorro
-              </label>
-              <input
-                type="number"
-                value={savingsTarget}
-                onChange={(e) => setSavingsTarget(e.target.value)}
-                className="w-full px-3 py-2 text-xs font-semibold bg-neutral-50 border border-neutral-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-              />
-            </div>
+          <div className="p-3 bg-sky-50 border border-sky-100 rounded-2xl flex items-center gap-2.5 text-xs text-sky-800">
+            <span className="text-base">💡</span>
+            <p className="leading-snug">
+              Tu <strong>Meta de Ahorro</strong> y <strong>Presupuesto Mensual</strong> se configuran y administran directamente en la sección de <strong>Presupuestos</strong>.
+            </p>
           </div>
 
           <button
